@@ -21,6 +21,8 @@ version: 1.0.0+1
 environment:
   sdk: ^3.9.2
 
+  
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -37,6 +39,9 @@ dependencies:
 
 # Add this line for device preview
   device_preview: ^1.1.0
+  sqflite: ^2.4.0
+  sqflite_common_ffi: ^2.3.0
+  intl: 0.20.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
