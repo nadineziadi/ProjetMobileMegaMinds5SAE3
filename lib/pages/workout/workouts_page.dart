@@ -7,13 +7,17 @@ class WorkoutsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CupertinoPageScaffold(
+    return CupertinoPageScaffold(
+      backgroundColor: const Color(0xFF353A40), // Top gradient color
       navigationBar: CupertinoNavigationBar(
-        middle: Text('Workouts'),
+        backgroundColor: const Color(0xFF353A40).withOpacity(0.9),
+        border: null, // Remove bottom border
+        middle: const Text(
+          'Workouts',
+          style: TextStyle(color: CupertinoColors.white),
+        ),
       ),
-      child: SafeArea(
-        child: WorkoutListScreen(),
-      ),
+      child: const WorkoutListScreen(),
     );
   }
 }
