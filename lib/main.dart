@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import 'pages/program/services/notification_service.dart';
 
 // Import your real module pages here
 import 'pages/user/dashboard_page.dart';
@@ -10,7 +12,15 @@ import 'pages/program/programs_page.dart';
 import 'pages/mental health/mental_health_page.dart';
 import 'pages/supplements/supplements_page.dart';
 
-void main() {
+// Import your providers
+import 'pages/program/providers/program_provider.dart';
+import 'pages/program/providers/statistics_provider.dart';
+
+void main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize notifications
+  await NotificationService.initialize();
   runApp(
     DevicePreview(
       enabled: true, // or !kReleaseMode if you import foundation
@@ -24,13 +34,17 @@ class FitLifeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FitLife Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProgramProvider()),
+        ChangeNotifierProvider(create: (_) => StatisticsProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'FitLife Tracker',
+        theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+        home: const HomeTabs(),
       ),
-      home: const HomeTabs(),
     );
   }
 }
@@ -70,10 +84,7 @@ class _HomeTabsState extends State<HomeTabs> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF32383E),
-              Color(0xFF17191C),
-            ],
+            colors: [Color(0xFF32383E), Color(0xFF17191C)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -108,22 +119,19 @@ class _HomeTabsState extends State<HomeTabs> {
             items: _icons.map((icon) {
               int index = _icons.indexOf(icon);
               bool isSelected = _currentIndex == index;
-              
+
               return BottomNavigationBarItem(
                 icon: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected 
+                    color: isSelected
                         ? const Color(0xFFC7F000).withOpacity(0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    size: isSelected ? 28 : 24,
-                  ),
+                  child: Icon(icon, size: isSelected ? 28 : 24),
                 ),
                 label: '',
               );
