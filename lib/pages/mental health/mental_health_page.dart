@@ -109,7 +109,7 @@ class MentalHealthHomeScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildQuickAccessCard(
+        _buildQuickAccessCard( houssem
           context,
           'Daily Check-in',
           'Track your mood',
