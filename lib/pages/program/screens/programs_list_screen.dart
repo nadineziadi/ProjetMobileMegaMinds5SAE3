@@ -10,12 +10,35 @@ class ProgramsListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const darkBg = Color(0xFF181A20);
+    const cardBg = Color(0xFF23252B);
+    const accentGreen = Color(0xFF6DFD7D);
+    const accentBlue = Color(0xFF4886FE);
+
     return Scaffold(
+      backgroundColor: darkBg,
       appBar: AppBar(
-        title: const Text('Available Programs'),
+        backgroundColor: darkBg,
         elevation: 0,
+        iconTheme: const IconThemeData(color: accentGreen),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [accentBlue, accentGreen],
+          ).createShader(bounds),
+          child: const Text(
+            'Available Programs',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: accentGreen,
+        foregroundColor: darkBg,
         onPressed: () {
           Navigator.push(
             context,
@@ -34,13 +57,10 @@ class ProgramsListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.fitness_center, size: 80, color: Colors.grey),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No programs available',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
+                  Icon(Icons.fitness_center, size: 75, color: Colors.grey.shade700),
+                  const SizedBox(height: 24),
+                  Text('No programs available', style: TextStyle(fontSize: 18, color: accentGreen, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 18),
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(
@@ -50,8 +70,14 @@ class ProgramsListScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create Your First Program'),
+                    icon: const Icon(Icons.add, color: darkBg),
+                    label: const Text('Create Your First Program', style: TextStyle(color: darkBg)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentGreen,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ],
               ),
@@ -59,47 +85,60 @@ class ProgramsListScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
             itemCount: provider.programs.length,
             itemBuilder: (context, index) {
               final program = provider.programs[index];
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 12),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: accentGreen.withOpacity(0.27), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(18),
                   leading: CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.blue.shade100,
+                    backgroundColor: accentGreen.withOpacity(0.2),
                     child: Icon(
                       _getIconForGoal(program.goal),
-                      color: Colors.blue,
+                      color: accentGreen,
                       size: 30,
                     ),
                   ),
                   title: Text(
                     program.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
+                      color: accentGreen,
                     ),
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today,
-                            size: 14, color: Colors.grey),
+                        Icon(Icons.calendar_today, size: 15, color: accentBlue.withOpacity(0.97)),
                         const SizedBox(width: 4),
-                        Text('${program.durationWeeks} weeks'),
+                        Text('${program.durationWeeks} weeks', style: TextStyle(color: Colors.grey[400])),
                         const SizedBox(width: 16),
-                        Icon(Icons.trending_up, size: 14, color: Colors.grey),
+                        Icon(Icons.trending_up, size: 15, color: accentBlue.withOpacity(0.97)),
                         const SizedBox(width: 4),
-                        Text(program.difficulty),
+                        Text(program.difficulty, style: TextStyle(color: Colors.grey[400])),
                       ],
                     ),
                   ),
                   trailing: PopupMenuButton<String>(
+                    color: cardBg,
+                    icon: Icon(Icons.more_vert, color: accentGreen),
                     onSelected: (value) {
                       if (value == 'view') {
                         provider.selectProgram(program.id!);
@@ -117,28 +156,27 @@ class ProgramsListScreen extends StatelessWidget {
                           ),
                         );
                       } else if (value == 'delete') {
-                        _showDeleteDialog(context, provider, program.id!,
-                            program.name);
+                        _showDeleteDialog(context, provider, program.id!, program.name);
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'view',
                         child: Row(
                           children: [
-                            Icon(Icons.visibility, size: 20),
-                            SizedBox(width: 12),
-                            Text('View Details'),
+                            Icon(Icons.visibility, size: 20, color: accentBlue),
+                            const SizedBox(width: 12),
+                            const Text('View Details', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 12),
-                            Text('Edit Program'),
+                            Icon(Icons.edit, size: 20, color: accentGreen),
+                            const SizedBox(width: 12),
+                            const Text('Edit Program', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -172,25 +210,24 @@ class ProgramsListScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, ProgramProvider provider,
-      int programId, String programName) {
+  void _showDeleteDialog(BuildContext context, ProgramProvider provider, int programId, String programName) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Program'),
+        backgroundColor: const Color(0xFF23252B),
+        title: const Text('Delete Program', style: TextStyle(color: Colors.red)),
         content: Text(
           'Are you sure you want to delete "$programName"?\n\nThis will permanently remove the program and all its workouts.',
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
-              
-              // Show loading
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -198,14 +235,8 @@ class ProgramsListScreen extends StatelessWidget {
                   child: CircularProgressIndicator(),
                 ),
               );
-
-              // Delete program
               await provider.deleteProgram(programId);
-
-              // Close loading
-              if (context.mounted) Navigator.pop(context);
-
-              // Show success message
+              if (context.mounted) Navigator.pop(context); // Close loading
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -215,10 +246,7 @@ class ProgramsListScreen extends StatelessWidget {
                 );
               }
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

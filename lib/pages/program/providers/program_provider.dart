@@ -9,7 +9,6 @@ class ProgramProvider extends ChangeNotifier {
   List<Program> _programs = [];
   Program? _selectedProgram;
   List<WorkoutLog> _workoutLogs = [];
-
   AdaptationRecommendation? _lastRecommendation;
 
   // Getters
@@ -41,6 +40,20 @@ class ProgramProvider extends ChangeNotifier {
   Future<void> deleteProgram(int programId) async {
     await DatabaseHelper.instance.deleteProgram(programId);
     await loadPrograms();
+    // Optionally also loadWorkoutLogs if you want log state to reset in UI
+    notifyListeners();
+  }
+
+  // Delete **all** programs and orphan workout logs (full wipe)
+  Future<void> deleteAllProgramsAndOrphanLogs() async {
+    final programs = await DatabaseHelper.instance.getAllPrograms();
+    for (var prog in programs) {
+      await DatabaseHelper.instance.deleteProgram(prog.id!);
+    }
+    // Final cleanup!
+    await DatabaseHelper.instance.deleteOrphanWorkoutLogs();
+    await loadPrograms();
+    await loadWorkoutLogs();
     notifyListeners();
   }
 
@@ -65,7 +78,6 @@ class ProgramProvider extends ChangeNotifier {
       notes: notes,
       fatigueLevel: fatigueLevel,
     );
-
     await DatabaseHelper.instance.insertWorkoutLog(log);
     await loadWorkoutLogs();
     notifyListeners();
@@ -101,64 +113,31 @@ class ProgramProvider extends ChangeNotifier {
         suggestedChange: '',
       );
     }
-
     _lastRecommendation = AdaptationService.analyzeProgress(
       _workoutLogs,
       _selectedProgram!,
     );
-
     notifyListeners();
     return _lastRecommendation!;
   }
 
   // Apply adaptation to program
-Future<void> applyAdaptation(double intensityMultiplier) async {
-  print('🔄 START applyAdaptation');
-  print('Selected program: ${_selectedProgram?.name}');
-  print('Selected program ID: ${_selectedProgram?.id}');
-  
-  if (_selectedProgram == null) {
-    print('❌ No selected program');
-    return;
-  }
-
-  try {
-    print('🔄 Step 1: Adapting program in memory...');
-    final adaptedProgram = AdaptationService.adaptProgram(
-      _selectedProgram!,
-      intensityMultiplier,
-    );
-    print('✅ Program adapted');
-    print('   - Program ID: ${adaptedProgram.id}');
-    print('   - Workouts count: ${adaptedProgram.workouts.length}');
-    
-    // Check workout IDs
-    for (var workout in adaptedProgram.workouts) {
-      print('   - Workout: ${workout.name}, ID: ${workout.id}, Exercises: ${workout.exercises.length}');
+  Future<void> applyAdaptation(double intensityMultiplier) async {
+    if (_selectedProgram == null) return;
+    try {
+      final adaptedProgram = AdaptationService.adaptProgram(
+        _selectedProgram!,
+        intensityMultiplier,
+      );
+      await DatabaseHelper.instance.updateProgramWithWorkouts(adaptedProgram);
+      await loadPrograms();
+      await selectProgram(_selectedProgram!.id!);
+      _lastRecommendation = null;
+      notifyListeners();
+    } catch (e) {
+      rethrow;
     }
-
-    print('🔄 Step 2: Updating database...');
-    await DatabaseHelper.instance.updateProgramWithWorkouts(adaptedProgram);
-    print('✅ Database updated');
-
-    print('🔄 Step 3: Reloading programs...');
-    await loadPrograms();
-    print('✅ Programs reloaded');
-
-    print('🔄 Step 4: Selecting program again...');
-    await selectProgram(_selectedProgram!.id!);
-    print('✅ Program selected');
-
-    _lastRecommendation = null;
-    notifyListeners();
-    
-    print('✅ COMPLETE applyAdaptation');
-  } catch (e, stackTrace) {
-    print('❌ ERROR in applyAdaptation: $e');
-    print('Stack trace: $stackTrace');
-    rethrow;
   }
-}
 
   // Dismiss adaptation suggestion
   void dismissAdaptation() {

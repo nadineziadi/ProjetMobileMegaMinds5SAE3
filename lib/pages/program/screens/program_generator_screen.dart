@@ -14,7 +14,7 @@ class ProgramGeneratorScreen extends StatefulWidget {
 
 class _ProgramGeneratorScreenState extends State<ProgramGeneratorScreen> {
   int _currentStep = 0;
-  
+
   // User selections
   String _selectedGoal = 'fat_loss';
   String _selectedEquipment = 'none';
@@ -30,171 +30,219 @@ class _ProgramGeneratorScreenState extends State<ProgramGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const darkBg = Color(0xFF181A20);
+    const cardBg = Color(0xFF23252B);
+    const accentGreen = Color(0xFF6DFD7D);
+    const accentBlue = Color(0xFF4886FE);
+
     return Scaffold(
+      backgroundColor: darkBg,
       appBar: AppBar(
-        title: const Text('Create Custom Program'),
+        backgroundColor: darkBg,
         elevation: 0,
+        iconTheme: const IconThemeData(color: accentGreen),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [accentBlue, accentGreen],
+          ).createShader(bounds),
+          child: const Text(
+            'Create Custom Program',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
       ),
-      body: Stepper(
-        currentStep: _currentStep,
-        onStepContinue: () {
-          if (_currentStep < 4) {
-            setState(() => _currentStep++);
-          } else {
-            _generateProgram();
-          }
-        },
-        onStepCancel: () {
-          if (_currentStep > 0) {
-            setState(() => _currentStep--);
-          } else {
-            Navigator.pop(context);
-          }
-        },
-        controlsBuilder: (context, details) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: Row(
-              children: [
-                ElevatedButton(
-                  onPressed: details.onStepContinue,
-                  child: Text(_currentStep == 4 ? 'Generate Program' : 'Continue'),
+      body: Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(primary: accentGreen, surface: cardBg),
+          cardColor: cardBg,
+        ),
+        child: Stepper(
+          type: StepperType.vertical,
+          currentStep: _currentStep,
+          onStepContinue: () {
+            if (_currentStep < 4) {
+              setState(() => _currentStep++);
+            } else {
+              _generateProgram();
+            }
+          },
+          onStepCancel: () {
+            if (_currentStep > 0) {
+              setState(() => _currentStep--);
+            } else {
+              Navigator.pop(context);
+            }
+          },
+          controlsBuilder: (context, details) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 16, left: 4, right: 4),
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: details.onStepContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentGreen,
+                      foregroundColor: darkBg,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    child: Text(_currentStep == 4 ? 'Generate Program' : 'Continue'),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton(
+                    onPressed: details.onStepCancel,
+                    style: TextButton.styleFrom(foregroundColor: accentBlue),
+                    child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
+                  ),
+                ],
+              ),
+            );
+          },
+          steps: [
+            Step(
+              title: Text('Your Goal', style: TextStyle(color: accentGreen, fontWeight: FontWeight.w600)),
+              isActive: _currentStep >= 0,
+              state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('What is your fitness goal?', style: TextStyle(fontSize: 16, color: Colors.grey[200])),
+                    const SizedBox(height: 14),
+                    ..._goals.map((goal) => Card(
+                          color: cardBg,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: RadioListTile<String>(
+                            title: Text(_getGoalLabel(goal), style: TextStyle(color: accentGreen, fontWeight: FontWeight.bold)),
+                            subtitle: Text(_getGoalDescription(goal), style: TextStyle(color: Colors.grey[400])),
+                            value: goal,
+                            groupValue: _selectedGoal,
+                            activeColor: accentGreen,
+                            onChanged: (value) { setState(() => _selectedGoal = value!); },
+                          ),
+                        )),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: details.onStepCancel,
-                  child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
+              ),
+            ),
+            Step(
+              title: Text('Equipment', style: TextStyle(color: accentBlue, fontWeight: FontWeight.w600)),
+              isActive: _currentStep >= 1,
+              state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('What equipment do you have access to?', style: TextStyle(fontSize: 16, color: Colors.grey[200])),
+                    const SizedBox(height: 14),
+                    ..._equipment.map((equip) => Card(
+                          color: cardBg,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: RadioListTile<String>(
+                            title: Text(_getEquipmentLabel(equip), style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
+                            subtitle: Text(_getEquipmentDescription(equip), style: TextStyle(color: Colors.grey[400])),
+                            value: equip,
+                            groupValue: _selectedEquipment,
+                            activeColor: accentBlue,
+                            onChanged: (value) { setState(() => _selectedEquipment = value!); },
+                          ),
+                        )),
+                  ],
                 ),
-              ],
+              ),
             ),
-          );
-        },
-        steps: [
-          // Step 1: Goal
-          Step(
-            title: const Text('Your Goal'),
-            isActive: _currentStep >= 0,
-            state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('What is your fitness goal?',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ..._goals.map((goal) => RadioListTile<String>(
-                      title: Text(_getGoalLabel(goal)),
-                      subtitle: Text(_getGoalDescription(goal)),
-                      value: goal,
-                      groupValue: _selectedGoal,
-                      onChanged: (value) {
-                        setState(() => _selectedGoal = value!);
-                      },
-                    )),
-              ],
+            Step(
+              title: Text('Frequency', style: TextStyle(color: accentGreen, fontWeight: FontWeight.w600)),
+              isActive: _currentStep >= 2,
+              state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('How many days per week can you train?', style: TextStyle(fontSize: 16, color: Colors.grey[200])),
+                    const SizedBox(height: 14),
+                    ..._daysOptions.map((days) => Card(
+                          color: cardBg,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: RadioListTile<int>(
+                            title: Text('$days days per week', style: TextStyle(color: accentGreen, fontWeight: FontWeight.bold)),
+                            subtitle: Text(_getDaysDescription(days), style: TextStyle(color: Colors.grey[400])),
+                            value: days,
+                            groupValue: _selectedDays,
+                            activeColor: accentGreen,
+                            onChanged: (value) { setState(() => _selectedDays = value!); },
+                          ),
+                        )),
+                  ],
+                ),
+              ),
             ),
-          ),
-
-          // Step 2: Equipment
-          Step(
-            title: const Text('Equipment'),
-            isActive: _currentStep >= 1,
-            state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('What equipment do you have access to?',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ..._equipment.map((equip) => RadioListTile<String>(
-                      title: Text(_getEquipmentLabel(equip)),
-                      subtitle: Text(_getEquipmentDescription(equip)),
-                      value: equip,
-                      groupValue: _selectedEquipment,
-                      onChanged: (value) {
-                        setState(() => _selectedEquipment = value!);
-                      },
-                    )),
-              ],
+            Step(
+              title: Text('Duration', style: TextStyle(color: accentBlue, fontWeight: FontWeight.w600)),
+              isActive: _currentStep >= 3,
+              state: _currentStep > 3 ? StepState.complete : StepState.indexed,
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('How long should each workout be?', style: TextStyle(fontSize: 16, color: Colors.grey[200])),
+                    const SizedBox(height: 14),
+                    ..._durationOptions.map((duration) => Card(
+                          color: cardBg,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: RadioListTile<int>(
+                            title: Text('$duration minutes', style: TextStyle(color: accentBlue, fontWeight: FontWeight.bold)),
+                            value: duration,
+                            groupValue: _selectedDuration,
+                            activeColor: accentBlue,
+                            onChanged: (value) { setState(() => _selectedDuration = value!); },
+                          ),
+                        )),
+                  ],
+                ),
+              ),
             ),
-          ),
-
-          // Step 3: Days per week
-          Step(
-            title: const Text('Frequency'),
-            isActive: _currentStep >= 2,
-            state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('How many days per week can you train?',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ..._daysOptions.map((days) => RadioListTile<int>(
-                      title: Text('$days days per week'),
-                      subtitle: Text(_getDaysDescription(days)),
-                      value: days,
-                      groupValue: _selectedDays,
-                      onChanged: (value) {
-                        setState(() => _selectedDays = value!);
-                      },
-                    )),
-              ],
+            Step(
+              title: Text('Experience Level', style: TextStyle(color: accentGreen, fontWeight: FontWeight.w600)),
+              isActive: _currentStep >= 4,
+              state: _currentStep > 4 ? StepState.complete : StepState.indexed,
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('What is your fitness experience level?', style: TextStyle(fontSize: 16, color: Colors.grey[200])),
+                    const SizedBox(height: 14),
+                    ..._experienceLevels.map((level) => Card(
+                          color: cardBg,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: RadioListTile<String>(
+                            title: Text(_getExperienceLabel(level), style: TextStyle(color: accentGreen, fontWeight: FontWeight.bold)),
+                            subtitle: Text(_getExperienceDescription(level), style: TextStyle(color: Colors.grey[400])),
+                            value: level,
+                            groupValue: _selectedExperience,
+                            activeColor: accentGreen,
+                            onChanged: (value) { setState(() => _selectedExperience = value!); },
+                          ),
+                        )),
+                  ],
+                ),
+              ),
             ),
-          ),
-
-          // Step 4: Duration
-          Step(
-            title: const Text('Duration'),
-            isActive: _currentStep >= 3,
-            state: _currentStep > 3 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('How long should each workout be?',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ..._durationOptions.map((duration) => RadioListTile<int>(
-                      title: Text('$duration minutes'),
-                      value: duration,
-                      groupValue: _selectedDuration,
-                      onChanged: (value) {
-                        setState(() => _selectedDuration = value!);
-                      },
-                    )),
-              ],
-            ),
-          ),
-
-          // Step 5: Experience
-          Step(
-            title: const Text('Experience Level'),
-            isActive: _currentStep >= 4,
-            state: _currentStep > 4 ? StepState.complete : StepState.indexed,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('What is your fitness experience level?',
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 16),
-                ..._experienceLevels.map((level) => RadioListTile<String>(
-                      title: Text(_getExperienceLabel(level)),
-                      subtitle: Text(_getExperienceDescription(level)),
-                      value: level,
-                      groupValue: _selectedExperience,
-                      onChanged: (value) {
-                        setState(() => _selectedExperience = value!);
-                      },
-                    )),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   void _generateProgram() async {
-    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -215,7 +263,6 @@ class _ProgramGeneratorScreenState extends State<ProgramGeneratorScreen> {
       ),
     );
 
-    // Generate program
     final program = ProgramGeneratorService.generateProgram(
       goal: _selectedGoal,
       equipment: _selectedEquipment,
@@ -224,16 +271,11 @@ class _ProgramGeneratorScreenState extends State<ProgramGeneratorScreen> {
       experience: _selectedExperience,
     );
 
-    // Save to database
     await DatabaseHelper.instance.insertProgram(program);
-
-    // Reload programs
     await context.read<ProgramProvider>().loadPrograms();
 
-    // Close loading dialog
     if (mounted) Navigator.pop(context);
 
-    // Show success and navigate
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -241,8 +283,6 @@ class _ProgramGeneratorScreenState extends State<ProgramGeneratorScreen> {
           backgroundColor: Colors.green,
         ),
       );
-
-      // Navigate back to programs list
       Navigator.pop(context);
     }
   }

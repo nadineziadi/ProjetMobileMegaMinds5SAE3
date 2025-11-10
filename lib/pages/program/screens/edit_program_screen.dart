@@ -5,7 +5,6 @@ import '../providers/program_provider.dart';
 
 class EditProgramScreen extends StatefulWidget {
   final Program program;
-
   const EditProgramScreen({Key? key, required this.program}) : super(key: key);
 
   @override
@@ -25,8 +24,7 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.program.name);
-    _descriptionController =
-        TextEditingController(text: widget.program.description);
+    _descriptionController = TextEditingController(text: widget.program.description);
     _selectedDifficulty = widget.program.difficulty;
     _selectedWeeks = widget.program.durationWeeks;
   }
@@ -40,114 +38,156 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const darkBg = Color(0xFF181A20);
+    const cardBg = Color(0xFF23252B);
+    const accentGreen = Color(0xFF6DFD7D);
+    const accentBlue = Color(0xFF4886FE);
+
     return Scaffold(
+      backgroundColor: darkBg,
       appBar: AppBar(
-        title: const Text('Edit Program'),
+        backgroundColor: darkBg,
+        iconTheme: const IconThemeData(color: accentGreen),
         elevation: 0,
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [accentBlue, accentGreen],
+          ).createShader(bounds),
+          child: const Text(
+            'Edit Program',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
           children: [
-            // Program Name
-            const Text(
-              'Program Name',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: 'Enter program name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Description
-            const Text(
-              'Description',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Enter program description',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Difficulty
-            const Text(
-              'Difficulty Level',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'easy', label: Text('Easy')),
-                ButtonSegment(value: 'medium', label: Text('Medium')),
-                ButtonSegment(value: 'hard', label: Text('Hard')),
-              ],
-              selected: {_selectedDifficulty},
-              onSelectionChanged: (Set<String> newSelection) {
-                setState(() {
-                  _selectedDifficulty = newSelection.first;
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Duration in weeks
-            const Text(
-              'Duration (Weeks)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: _weekOptions.map((weeks) {
-                return ChoiceChip(
-                  label: Text('$weeks weeks'),
-                  selected: _selectedWeeks == weeks,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() => _selectedWeeks = weeks);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 40),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _saveChanges,
-                icon: const Icon(Icons.save),
-                label: const Text(
-                  'Save Changes',
-                  style: TextStyle(fontSize: 16),
-                ),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            // Editable Card
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.grey[900]!, width: 0.7),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.09),
+                    blurRadius: 7,
+                    offset: const Offset(0, 3),
                   ),
-                ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Program Name', accentGreen),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Enter program name',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: cardBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _label('Description', accentBlue),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _descriptionController,
+                    maxLines: 4,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Enter program description',
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: cardBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _label('Difficulty Level', accentGreen),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    children: _difficulties.map((diff) {
+                      final isSelected = _selectedDifficulty == diff;
+                      return ChoiceChip(
+                        label: Text(
+                          diff[0].toUpperCase() + diff.substring(1),
+                          style: TextStyle(color: isSelected ? darkBg : accentGreen),
+                        ),
+                        selected: isSelected,
+                        selectedColor: accentGreen,
+                        backgroundColor: cardBg,
+                        side: BorderSide(color: accentGreen, width: 2),
+                        onSelected: (selected) {
+                          if (selected) setState(() => _selectedDifficulty = diff);
+                        },
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _label('Duration (Weeks)', accentBlue),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    children: _weekOptions.map((weeks) {
+                      final isSelected = _selectedWeeks == weeks;
+                      return ChoiceChip(
+                        label: Text(
+                          '$weeks weeks',
+                          style: TextStyle(color: isSelected ? darkBg : accentBlue),
+                        ),
+                        selected: isSelected,
+                        selectedColor: accentBlue,
+                        backgroundColor: cardBg,
+                        side: BorderSide(color: accentBlue, width: 2),
+                        onSelected: (selected) {
+                          if (selected) setState(() => _selectedWeeks = weeks);
+                        },
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveChanges,
+                      icon: Icon(Icons.save, color: darkBg),
+                      label: Text('Save Changes', style: TextStyle(fontSize: 16, color: darkBg)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentGreen,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -156,8 +196,18 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
     );
   }
 
+  Widget _label(String txt, Color color) {
+    return Text(
+      txt,
+      style: TextStyle(
+        fontSize: 16.5,
+        fontWeight: FontWeight.bold,
+        color: color,
+      ),
+    );
+  }
+
   void _saveChanges() async {
-    // Validate inputs
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -168,16 +218,12 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
       return;
     }
 
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    // Create updated program
     final updatedProgram = Program(
       id: widget.program.id,
       name: _nameController.text.trim(),
@@ -189,13 +235,10 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
       equipment: widget.program.equipment,
     );
 
-    // Update in database
     await context.read<ProgramProvider>().updateProgram(updatedProgram);
 
-    // Close loading
     if (mounted) Navigator.pop(context);
 
-    // Show success and go back
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -203,7 +246,7 @@ class _EditProgramScreenState extends State<EditProgramScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context); // Go back to programs list
+      Navigator.pop(context);
     }
   }
 }

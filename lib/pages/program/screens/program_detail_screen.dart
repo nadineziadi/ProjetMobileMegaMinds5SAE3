@@ -1,5 +1,3 @@
-// lib/screens/program_detail_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/program_provider.dart';
@@ -13,24 +11,44 @@ class ProgramDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const darkBg = Color(0xFF181A20);
+    const cardBg = Color(0xFF23252B);
+    const accentGreen = Color(0xFF6DFD7D);
+    const accentBlue = Color(0xFF4886FE);
+
     return Scaffold(
+      backgroundColor: darkBg,
       appBar: AppBar(
-        title: const Text('Program Details'),
+        backgroundColor: darkBg,
         elevation: 0,
+        iconTheme: const IconThemeData(color: accentGreen),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [accentBlue, accentGreen],
+          ).createShader(bounds),
+          child: const Text(
+            'Program Details',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
         actions: [
           Consumer<ProgramProvider>(
             builder: (context, provider, _) {
               if (provider.selectedProgram == null) return const SizedBox();
-              
               return PopupMenuButton<String>(
+                color: cardBg,
+                icon: const Icon(Icons.more_vert, color: accentGreen),
                 onSelected: (value) {
                   if (value == 'edit') {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => EditProgramScreen(
-                          program: provider.selectedProgram!,
-                        ),
+                        builder: (_) => EditProgramScreen(program: provider.selectedProgram!),
                       ),
                     );
                   } else if (value == 'delete') {
@@ -38,13 +56,13 @@ class ProgramDetailScreen extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(width: 12),
-                        Text('Edit Program'),
+                        Icon(Icons.edit, size: 20, color: accentGreen),
+                        const SizedBox(width: 12),
+                        const Text('Edit Program', style: TextStyle(color: accentGreen)),
                       ],
                     ),
                   ),
@@ -67,223 +85,198 @@ class ProgramDetailScreen extends StatelessWidget {
       body: Consumer<ProgramProvider>(
         builder: (context, provider, _) {
           final program = provider.selectedProgram;
-
           if (program == null) {
-            return const Center(child: Text('No program selected'));
+            return const Center(child: Text('No program selected', style: TextStyle(color: Colors.white)));
           }
-
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
               children: [
-                // Header
+                // Header Card
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
                     gradient: LinearGradient(
-                      colors: [Colors.blue.shade400, Colors.blue.shade600],
+                      colors: [cardBg, accentGreen.withOpacity(0.08)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.09),
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         program.name,
-                        style: const TextStyle(
-                          fontSize: 28,
+                        style: TextStyle(
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: accentGreen,
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         program.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white,
+                          color: Colors.grey[100],
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Stats
-                Padding(
-                  padding: const EdgeInsets.all(20),
+                const SizedBox(height: 22),
+                // Stats Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _StatCard(icon: Icons.calendar_today, label: 'Duration', value: '${program.durationWeeks}w', accent: accentBlue),
+                    _StatCard(icon: Icons.trending_up, label: 'Difficulty', value: program.difficulty, accent: accentGreen),
+                    _StatCard(icon: Icons.check_circle, label: 'Completed', value: '${provider.getCompletedWorkoutsCount()}', accent: Colors.amber),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                // Smart Adaptation Card
+                Container(
+                  margin: const EdgeInsets.only(bottom: 22),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: accentGreen, width: 1.1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.07),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(18),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _StatCard(
-                        icon: Icons.calendar_today,
-                        label: 'Duration',
-                        value: '${program.durationWeeks}w',
+                      Container(
+                        padding: const EdgeInsets.all(11),
+                        decoration: BoxDecoration(
+                          color: accentGreen.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Icon(Icons.psychology, color: accentGreen, size: 30),
                       ),
-                      _StatCard(
-                        icon: Icons.trending_up,
-                        label: 'Difficulty',
-                        value: program.difficulty,
+                      const SizedBox(width: 17),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Smart Adaptation',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: accentGreen),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Analyze your progress and adjust intensity',
+                              style: TextStyle(color: Colors.grey[400], fontSize: 13.5),
+                            ),
+                          ],
+                        ),
                       ),
-                      _StatCard(
-                        icon: Icons.check_circle,
-                        label: 'Completed',
-                        value: '${provider.getCompletedWorkoutsCount()}',
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: () => _checkAdaptation(context, provider),
+                        icon: const Icon(Icons.insights, size: 20),
+                        label: const Text('Analyze'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: accentGreen,
+                          foregroundColor: darkBg,
+                          minimumSize: const Size(0, 38),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                // Smart Adaptation Card
+                // Weekly Schedule Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Card(
-                    elevation: 2,
-                    color: Colors.blue.shade50,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.psychology,
-                              color: Colors.blue.shade700,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Smart Adaptation',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Analyze your progress and adjust intensity',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () => _checkAdaptation(context, provider),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade700,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text('Analyze'),
-                          ),
-                        ],
-                      ),
+                  padding: const EdgeInsets.only(left: 3, bottom: 6),
+                  child: Text(
+                    'Weekly Schedule',
+                    style: TextStyle(
+                      fontSize: 18.5,
+                      fontWeight: FontWeight.bold,
+                      color: accentBlue,
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // Weekly Schedule
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Weekly Schedule',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                // Weekly Schedule List
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: program.workouts.length,
+                  itemBuilder: (context, index) {
+                    final workout = program.workouts[index];
+                    final dayNames = [
+                      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+                    ];
+                    final isCompleted = provider.isWorkoutCompletedToday(workout.id!);
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(color: isCompleted ? accentGreen : Colors.grey.shade800, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: program.workouts.length,
-                        itemBuilder: (context, index) {
-                          final workout = program.workouts[index];
-                          final dayNames = [
-                            'Monday',
-                            'Tuesday',
-                            'Wednesday',
-                            'Thursday',
-                            'Friday',
-                            'Saturday',
-                            'Sunday'
-                          ];
-                          final isCompleted = provider.isWorkoutCompletedToday(
-                            workout.id!,
-                          );
-
-                          return Card(
-                            elevation: 1,
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isCompleted
-                                    ? Colors.green
-                                    : Colors.blue.shade100,
-                                child: isCompleted
-                                    ? const Icon(Icons.check, color: Colors.white)
-                                    : Text(
-                                        dayNames[index].substring(0, 3),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                              ),
-                              title: Text(
-                                workout.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                workout.isRestDay
-                                    ? 'Rest day'
-                                    : '${workout.durationMinutes} min • ${workout.exercises.length} exercises',
-                              ),
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => WorkoutDetailScreen(
-                                      workout: workout,
-                                    ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isCompleted ? accentGreen : Colors.grey.shade700,
+                          child: isCompleted
+                              ? const Icon(Icons.check, color: Colors.white)
+                              : Text(
+                                  dayNames[index].substring(0, 3),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: accentBlue,
                                   ),
-                                );
-                              },
+                                ),
+                        ),
+                        title: Text(
+                          workout.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: accentBlue,
+                          ),
+                        ),
+                        subtitle: Text(
+                          workout.isRestDay
+                              ? 'Rest day'
+                              : '${workout.durationMinutes} min • ${workout.exercises.length} exercises',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: accentBlue),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => WorkoutDetailScreen(workout: workout),
                             ),
                           );
                         },
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -506,24 +499,29 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color accent;
+
 
   const _StatCard({
     required this.icon,
     required this.label,
     required this.value,
+    required this.accent,
+
   });
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.blue, size: 32),
+        Icon(icon, color: accent, size: 32),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: accent,
           ),
         ),
         const SizedBox(height: 4),
