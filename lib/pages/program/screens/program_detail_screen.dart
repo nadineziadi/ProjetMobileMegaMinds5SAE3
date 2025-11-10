@@ -48,7 +48,9 @@ class ProgramDetailScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => EditProgramScreen(program: provider.selectedProgram!),
+                        builder: (_) => EditProgramScreen(
+                          program: provider.selectedProgram!,
+                        ),
                       ),
                     );
                   } else if (value == 'delete') {
@@ -62,7 +64,10 @@ class ProgramDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.edit, size: 20, color: accentGreen),
                         const SizedBox(width: 12),
-                        const Text('Edit Program', style: TextStyle(color: accentGreen)),
+                        const Text(
+                          'Edit Program',
+                          style: TextStyle(color: accentGreen),
+                        ),
                       ],
                     ),
                   ),
@@ -72,7 +77,10 @@ class ProgramDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.delete, size: 20, color: Colors.red),
                         SizedBox(width: 12),
-                        Text('Delete Program', style: TextStyle(color: Colors.red)),
+                        Text(
+                          'Delete Program',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -86,7 +94,12 @@ class ProgramDetailScreen extends StatelessWidget {
         builder: (context, provider, _) {
           final program = provider.selectedProgram;
           if (program == null) {
-            return const Center(child: Text('No program selected', style: TextStyle(color: Colors.white)));
+            return const Center(
+              child: Text(
+                'No program selected',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
           return SafeArea(
             child: ListView(
@@ -124,10 +137,7 @@ class ProgramDetailScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         program.description,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[100],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[100]),
                       ),
                     ],
                   ),
@@ -137,9 +147,24 @@ class ProgramDetailScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _StatCard(icon: Icons.calendar_today, label: 'Duration', value: '${program.durationWeeks}w', accent: accentBlue),
-                    _StatCard(icon: Icons.trending_up, label: 'Difficulty', value: program.difficulty, accent: accentGreen),
-                    _StatCard(icon: Icons.check_circle, label: 'Completed', value: '${provider.getCompletedWorkoutsCount()}', accent: Colors.amber),
+                    _StatCard(
+                      icon: Icons.calendar_today,
+                      label: 'Duration',
+                      value: '${program.durationWeeks}w',
+                      accent: accentBlue,
+                    ),
+                    _StatCard(
+                      icon: Icons.trending_up,
+                      label: 'Difficulty',
+                      value: program.difficulty,
+                      accent: accentGreen,
+                    ),
+                    _StatCard(
+                      icon: Icons.check_circle,
+                      label: 'Completed',
+                      value: '${provider.getCompletedWorkoutsCount()}',
+                      accent: Colors.amber,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 22),
@@ -167,7 +192,11 @@ class ProgramDetailScreen extends StatelessWidget {
                           color: accentGreen.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(13),
                         ),
-                        child: Icon(Icons.psychology, color: accentGreen, size: 30),
+                        child: Icon(
+                          Icons.psychology,
+                          color: accentGreen,
+                          size: 30,
+                        ),
                       ),
                       const SizedBox(width: 17),
                       Expanded(
@@ -176,12 +205,19 @@ class ProgramDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Smart Adaptation',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: accentGreen),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: accentGreen,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Analyze your progress and adjust intensity',
-                              style: TextStyle(color: Colors.grey[400], fontSize: 13.5),
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 13.5,
+                              ),
                             ),
                           ],
                         ),
@@ -195,8 +231,13 @@ class ProgramDetailScreen extends StatelessWidget {
                           backgroundColor: accentGreen,
                           foregroundColor: darkBg,
                           minimumSize: const Size(0, 38),
-                          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ],
@@ -222,15 +263,28 @@ class ProgramDetailScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final workout = program.workouts[index];
                     final dayNames = [
-                      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+                      'Monday',
+                      'Tuesday',
+                      'Wednesday',
+                      'Thursday',
+                      'Friday',
+                      'Saturday',
+                      'Sunday',
                     ];
-                    final isCompleted = provider.isWorkoutCompletedToday(workout.id!);
+                    final isCompleted = provider.isWorkoutCompletedToday(
+                      workout.id!,
+                    );
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
                         color: cardBg,
                         borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: isCompleted ? accentGreen : Colors.grey.shade800, width: 1),
+                        border: Border.all(
+                          color: isCompleted
+                              ? accentGreen
+                              : Colors.grey.shade800,
+                          width: 1,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
@@ -241,7 +295,9 @@ class ProgramDetailScreen extends StatelessWidget {
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: isCompleted ? accentGreen : Colors.grey.shade700,
+                          backgroundColor: isCompleted
+                              ? accentGreen
+                              : Colors.grey.shade700,
                           child: isCompleted
                               ? const Icon(Icons.check, color: Colors.white)
                               : Text(
@@ -265,12 +321,17 @@ class ProgramDetailScreen extends StatelessWidget {
                               : '${workout.durationMinutes} min • ${workout.exercises.length} exercises',
                           style: const TextStyle(color: Colors.grey),
                         ),
-                        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: accentBlue),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: accentBlue,
+                        ),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => WorkoutDetailScreen(workout: workout),
+                              builder: (_) =>
+                                  WorkoutDetailScreen(workout: workout),
                             ),
                           );
                         },
@@ -291,9 +352,7 @@ class ProgramDetailScreen extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     // Check adaptation
@@ -313,17 +372,16 @@ class ProgramDetailScreen extends StatelessWidget {
               // ✅ FIXED: Save navigator reference before async operations
               final navigator = Navigator.of(context);
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              
+
               // Close the adaptation dialog
               navigator.pop();
-              
+
               // Show loading
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                builder: (context) =>
+                    const Center(child: CircularProgressIndicator()),
               );
 
               try {
@@ -352,7 +410,7 @@ class ProgramDetailScreen extends StatelessWidget {
               } catch (e) {
                 // Close loading on error
                 navigator.pop();
-                
+
                 // Show error
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
@@ -430,63 +488,102 @@ class ProgramDetailScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Program'),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF23252B),
+        title: const Text(
+          'Delete Program',
+          style: TextStyle(color: Colors.red),
+        ),
         content: Text(
-          'Are you sure you want to delete "${program.name}"?\n\nThis will permanently remove the program and all its workouts.',
+          'Are you sure you want to delete "${program.name}"?\n\nThis will permanently remove the program and all its workouts, including calendar events.',
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
-              // ✅ Save navigator and messenger references
-              final navigator = Navigator.of(context);
+              // ✅ CRITICAL: Save navigators BEFORE any async operations
+              final confirmDialogNavigator = Navigator.of(dialogContext);
+              final loadingNavigator = Navigator.of(context);
+              final detailScreenNavigator = Navigator.of(context);
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              
-              // Close dialog
-              navigator.pop();
-              
-              // Show loading
+
+              // Close confirmation dialog
+              confirmDialogNavigator.pop();
+
+              // Show loading dialog
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
+                builder: (loadingContext) => WillPopScope(
+                  onWillPop: () async => false,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6DFD7D),
+                      ),
+                    ),
+                  ),
                 ),
               );
 
               try {
-                // Delete program
-                await provider.deleteProgram(program.id!);
+                // Perform deletion
+                debugPrint('🔄 Starting deletion process...');
+                await provider.deleteProgramWithCalendar(program);
+                debugPrint('✅ Deletion process complete');
 
-                // Close loading and detail screen
-                navigator.pop(); // Close loading
-                navigator.pop(); // Close detail screen
-                
+                // Close loading dialog using saved navigator
+                loadingNavigator.pop();
+                debugPrint('🔄 Loading dialog closed');
+
+                // Small delay before navigation
+                await Future.delayed(const Duration(milliseconds: 50));
+
+                // Close detail screen using saved navigator
+                detailScreenNavigator.pop();
+                debugPrint('🔄 Detail screen closed');
+
+                // Show success message using saved scaffold messenger
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('${program.name} deleted successfully'),
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('${program.name} deleted successfully'),
+                        ),
+                      ],
+                    ),
                     backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
                   ),
                 );
               } catch (e) {
-                // Close loading on error
-                navigator.pop();
-                
+                debugPrint('❌ Error during deletion: $e');
+
+                // Close loading using saved navigator
+                loadingNavigator.pop();
+
+                // Show error message using saved scaffold messenger
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text('Error deleting program: $e'),
                     backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               }
             },
             child: const Text(
               'Delete',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -501,16 +598,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color accent;
 
-
   const _StatCard({
     required this.icon,
     required this.label,
     required this.value,
     required this.accent,
-
   });
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -525,13 +620,7 @@ class _StatCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
       ],
     );
   }

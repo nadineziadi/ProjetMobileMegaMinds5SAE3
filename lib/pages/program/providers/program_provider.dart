@@ -4,6 +4,7 @@ import '../models/workout.dart';
 import '../models/user_progress.dart';
 import '../services/database_helper.dart';
 import '../services/adaptation_service.dart';
+import '../services/calendar_service.dart';
 
 class ProgramProvider extends ChangeNotifier {
   List<Program> _programs = [];
@@ -36,25 +37,71 @@ class ProgramProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Delete program
-  Future<void> deleteProgram(int programId) async {
-    await DatabaseHelper.instance.deleteProgram(programId);
-    await loadPrograms();
-    // Optionally also loadWorkoutLogs if you want log state to reset in UI
-    notifyListeners();
+  // Delete program (removes calendar events then DB)
+  Future<void> deleteProgramWithCalendar(Program program) async {
+    try {
+      debugPrint('🗑️ Starting deletion for: ${program.name}');
+      
+      // 1. Remove calendar events for this program
+      final calendarRemoved = await CalendarService.removeProgramFromCalendar(program.name);
+      debugPrint('Calendar removal result: $calendarRemoved');
+      
+      // 2. Remove program from database
+      await DatabaseHelper.instance.deleteProgram(program.id!);
+      debugPrint('Database deletion complete');
+      
+      // 3. Clear selectedProgram to avoid stale state
+      if (_selectedProgram?.id == program.id) {
+        _selectedProgram = null;
+      }
+      
+      // 4. Reload data silently (without notifyListeners during the operation)
+      _programs = await DatabaseHelper.instance.getAllPrograms();
+      _workoutLogs = await DatabaseHelper.instance.getWorkoutLogs();
+      
+      debugPrint('✅ Deletion complete, data reloaded');
+      
+      // 5. Only notify listeners at the very end
+      notifyListeners();
+      
+    } catch (e) {
+      debugPrint('❌ Error deleting program: $e');
+      rethrow;
+    }
   }
 
   // Delete **all** programs and orphan workout logs (full wipe)
-  Future<void> deleteAllProgramsAndOrphanLogs() async {
-    final programs = await DatabaseHelper.instance.getAllPrograms();
-    for (var prog in programs) {
-      await DatabaseHelper.instance.deleteProgram(prog.id!);
+  Future<void> deleteAllProgramsAndOrphanLogsWithCalendar() async {
+    try {
+      final programs = await DatabaseHelper.instance.getAllPrograms();
+      
+      // Remove calendar events for each program
+      for (var prog in programs) {
+        try {
+          final removed = await CalendarService.removeProgramFromCalendar(prog.name);
+          debugPrint('Removed calendar for ${prog.name}: $removed');
+        } catch (e) {
+          debugPrint('Error removing calendar for ${prog.name}: $e');
+        }
+        
+        await DatabaseHelper.instance.deleteProgram(prog.id!);
+      }
+      
+      // Final cleanup
+      await DatabaseHelper.instance.deleteOrphanWorkoutLogs();
+      
+      // Clear selected program
+      _selectedProgram = null;
+      
+      // Reload data
+      _programs = await DatabaseHelper.instance.getAllPrograms();
+      _workoutLogs = await DatabaseHelper.instance.getWorkoutLogs();
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting all programs: $e');
+      rethrow;
     }
-    // Final cleanup!
-    await DatabaseHelper.instance.deleteOrphanWorkoutLogs();
-    await loadPrograms();
-    await loadWorkoutLogs();
-    notifyListeners();
   }
 
   // Update program
@@ -98,10 +145,6 @@ class ProgramProvider extends ChangeNotifier {
         log.date.month == today.month &&
         log.date.day == today.day);
   }
-
-  // -----------------------------
-  // ✅ ADAPTATION LOGIC
-  // -----------------------------
 
   // Check if we need to adapt program
   Future<AdaptationRecommendation> checkAdaptation() async {

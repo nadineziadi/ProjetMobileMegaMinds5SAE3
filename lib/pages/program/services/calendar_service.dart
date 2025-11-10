@@ -5,7 +5,6 @@ import '../models/program.dart';
 import '../models/workout.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-
 class CalendarService {
   static final DeviceCalendarPlugin _deviceCalendarPlugin = DeviceCalendarPlugin();
   static String? _selectedCalendarId;
@@ -25,7 +24,7 @@ class CalendarService {
       final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
       return calendarsResult.data ?? [];
     } catch (e) {
-      print('Error getting calendars: $e');
+      debugPrint('Error getting calendars: $e');
       return [];
     }
   }
@@ -67,6 +66,8 @@ class CalendarService {
     final time = preferredTime ?? const TimeOfDay(hour: 9, minute: 0);
 
     try {
+      int eventsCreated = 0;
+      
       // Add each workout as a calendar event
       for (int weekDay = 0; weekDay < program.workouts.length; weekDay++) {
         final workout = program.workouts[weekDay];
@@ -86,73 +87,114 @@ class CalendarService {
           Duration(minutes: workout.durationMinutes),
         );
 
-        // Create event
+        // Create event with program marker in title
         final event = Event(
           _selectedCalendarId,
-          title: '${program.name}: ${workout.name}',
-          description: _buildEventDescription(workout),
+          title: '🏋️ ${program.name}: ${workout.name}',
+          description: _buildEventDescription(workout, program.name),
           start: TZDateTime.from(workoutStart, local),
           end: TZDateTime.from(workoutEnd, local),
-          location: 'Fitness App',
+          location: 'FitTrack App', // Marker for our app's events
         );
 
         // Add to calendar
-        await _deviceCalendarPlugin.createOrUpdateEvent(event);
-      }
-
-      return true;
-    } catch (e) {
-      print('Error adding to calendar: $e');
-      return false;
-    }
-  }
-
-  // Remove program events from calendar
-  static Future<bool> removeProgramFromCalendar(String programName) async {
-    final hasPermission = await requestPermissions();
-    if (!hasPermission) return false;
-
-    if (_selectedCalendarId == null) {
-      await selectCalendar();
-    }
-
-    if (_selectedCalendarId == null) return false;
-
-    try {
-      // Get all events
-      final now = DateTime.now();
-      final startDate = now.subtract(const Duration(days: 7));
-      final endDate = now.add(const Duration(days: 90));
-
-      final eventsResult = await _deviceCalendarPlugin.retrieveEvents(
-        _selectedCalendarId,
-        RetrieveEventsParams(
-          startDate: startDate,
-          endDate: endDate,
-        ),
-      );
-
-      final events = eventsResult.data ?? [];
-
-      // Delete events that match the program name
-      for (var event in events) {
-        if (event.title?.contains(programName) == true) {
-          await _deviceCalendarPlugin.deleteEvent(
-            _selectedCalendarId,
-            event.eventId!,
-          );
+        final result = await _deviceCalendarPlugin.createOrUpdateEvent(event);
+        if (result?.isSuccess ?? false) {
+          eventsCreated++;
+          debugPrint('Created event: ${event.title}');
         }
       }
 
-      return true;
+      debugPrint('Created $eventsCreated events for ${program.name}');
+      return eventsCreated > 0;
     } catch (e) {
-      print('Error removing from calendar: $e');
+      debugPrint('Error adding to calendar: $e');
       return false;
     }
   }
 
-  static String _buildEventDescription(Workout workout) {
+  // Remove program events from calendar - FIXED VERSION
+  static Future<bool> removeProgramFromCalendar(String programName) async {
+    final hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      debugPrint('❌ Calendar permission denied');
+      return false;
+    }
+
+    try {
+      // Get ALL calendars, not just the selected one
+      final calendars = await getCalendars();
+      if (calendars.isEmpty) {
+        debugPrint('❌ No calendars found');
+        return false;
+      }
+
+      debugPrint('🔍 Searching for events in ${calendars.length} calendars...');
+
+      int totalDeleted = 0;
+      final now = DateTime.now();
+      final startDate = now.subtract(const Duration(days: 30)); // Look back 30 days
+      final endDate = now.add(const Duration(days: 365)); // Look forward 1 year
+
+      // Search through ALL calendars
+      for (var calendar in calendars) {
+        if (calendar.isReadOnly == true) {
+          debugPrint('⏭️  Skipping read-only calendar: ${calendar.name}');
+          continue;
+        }
+
+        debugPrint('📅 Checking calendar: ${calendar.name} (${calendar.id})');
+
+        try {
+          final eventsResult = await _deviceCalendarPlugin.retrieveEvents(
+            calendar.id,
+            RetrieveEventsParams(
+              startDate: startDate,
+              endDate: endDate,
+            ),
+          );
+
+          final events = eventsResult.data ?? [];
+          debugPrint('   Found ${events.length} events in this calendar');
+
+          // Delete events that match the program name
+          for (var event in events) {
+            // Check if this event belongs to our program
+            final titleMatches = event.title?.contains(programName) ?? false;
+            final locationMatches = event.location?.contains('FitTrack') ?? false;
+            
+            if (titleMatches && locationMatches) {
+              debugPrint('   🗑️  Deleting: ${event.title}');
+              
+              final deleteResult = await _deviceCalendarPlugin.deleteEvent(
+                calendar.id,
+                event.eventId!,
+              );
+
+              if (deleteResult.isSuccess) {
+                totalDeleted++;
+                debugPrint('   ✅ Deleted successfully');
+              } else {
+                debugPrint('   ❌ Failed to delete: ${deleteResult.errors}');
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('   ❌ Error checking calendar ${calendar.name}: $e');
+        }
+      }
+
+      debugPrint('✅ Total events deleted: $totalDeleted');
+      return totalDeleted > 0;
+    } catch (e) {
+      debugPrint('❌ Error removing from calendar: $e');
+      return false;
+    }
+  }
+
+  static String _buildEventDescription(Workout workout, String programName) {
     final buffer = StringBuffer();
+    buffer.writeln('Program: $programName');
     buffer.writeln('${workout.description}\n');
     buffer.writeln('Duration: ${workout.durationMinutes} minutes');
     buffer.writeln('Difficulty: ${workout.difficulty}\n');
@@ -163,6 +205,8 @@ class CalendarService {
         buffer.writeln('• ${exercise.name} - ${exercise.sets}x${exercise.reps}');
       }
     }
+    
+    buffer.writeln('\n📱 Created by FitTrack App');
     
     return buffer.toString();
   }

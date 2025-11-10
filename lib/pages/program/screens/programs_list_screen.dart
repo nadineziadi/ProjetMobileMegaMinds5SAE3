@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/program_provider.dart';
+import '../models/program.dart';
 import 'program_detail_screen.dart';
 import 'program_generator_screen.dart';
 import 'edit_program_screen.dart';
@@ -42,9 +43,7 @@ class ProgramsListScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const ProgramGeneratorScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const ProgramGeneratorScreen()),
           );
         },
         icon: const Icon(Icons.add),
@@ -57,9 +56,20 @@ class ProgramsListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.fitness_center, size: 75, color: Colors.grey.shade700),
+                  Icon(
+                    Icons.fitness_center,
+                    size: 75,
+                    color: Colors.grey.shade700,
+                  ),
                   const SizedBox(height: 24),
-                  Text('No programs available', style: TextStyle(fontSize: 18, color: accentGreen, fontWeight: FontWeight.w600)),
+                  Text(
+                    'No programs available',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: accentGreen,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   ElevatedButton.icon(
                     onPressed: () {
@@ -71,11 +81,16 @@ class ProgramsListScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.add, color: darkBg),
-                    label: const Text('Create Your First Program', style: TextStyle(color: darkBg)),
+                    label: const Text(
+                      'Create Your First Program',
+                      style: TextStyle(color: darkBg),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentGreen,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       textStyle: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -94,7 +109,10 @@ class ProgramsListScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accentGreen.withOpacity(0.27), width: 1),
+                  border: Border.all(
+                    color: accentGreen.withOpacity(0.27),
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.07),
@@ -126,13 +144,27 @@ class ProgramsListScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 15, color: accentBlue.withOpacity(0.97)),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 15,
+                          color: accentBlue.withOpacity(0.97),
+                        ),
                         const SizedBox(width: 4),
-                        Text('${program.durationWeeks} weeks', style: TextStyle(color: Colors.grey[400])),
+                        Text(
+                          '${program.durationWeeks} weeks',
+                          style: TextStyle(color: Colors.grey[400]),
+                        ),
                         const SizedBox(width: 16),
-                        Icon(Icons.trending_up, size: 15, color: accentBlue.withOpacity(0.97)),
+                        Icon(
+                          Icons.trending_up,
+                          size: 15,
+                          color: accentBlue.withOpacity(0.97),
+                        ),
                         const SizedBox(width: 4),
-                        Text(program.difficulty, style: TextStyle(color: Colors.grey[400])),
+                        Text(
+                          program.difficulty,
+                          style: TextStyle(color: Colors.grey[400]),
+                        ),
                       ],
                     ),
                   ),
@@ -156,7 +188,7 @@ class ProgramsListScreen extends StatelessWidget {
                           ),
                         );
                       } else if (value == 'delete') {
-                        _showDeleteDialog(context, provider, program.id!, program.name);
+                        _showDeleteDialog(context, provider, program);
                       }
                     },
                     itemBuilder: (context) => [
@@ -166,7 +198,10 @@ class ProgramsListScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.visibility, size: 20, color: accentBlue),
                             const SizedBox(width: 12),
-                            const Text('View Details', style: TextStyle(color: Colors.white)),
+                            const Text(
+                              'View Details',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -176,7 +211,10 @@ class ProgramsListScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.edit, size: 20, color: accentGreen),
                             const SizedBox(width: 12),
-                            const Text('Edit Program', style: TextStyle(color: Colors.white)),
+                            const Text(
+                              'Edit Program',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -210,43 +248,102 @@ class ProgramsListScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, ProgramProvider provider, int programId, String programName) {
+  void _showDeleteDialog(
+    BuildContext context,
+    ProgramProvider provider,
+    Program program,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF23252B),
-        title: const Text('Delete Program', style: TextStyle(color: Colors.red)),
+        title: const Text(
+          'Delete Program',
+          style: TextStyle(color: Colors.red),
+        ),
         content: Text(
-          'Are you sure you want to delete "$programName"?\n\nThis will permanently remove the program and all its workouts.',
+          'Are you sure you want to delete "${program.name}"?\n\nThis will permanently remove the program and all its workouts, including calendar events.',
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // Close dialog
+              // ✅ CRITICAL: Save navigators BEFORE any async operations
+              final confirmDialogNavigator = Navigator.of(dialogContext);
+              final loadingNavigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+              // Close confirmation dialog
+              confirmDialogNavigator.pop();
+
+              // Show loading dialog
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
+                builder: (loadingContext) => WillPopScope(
+                  onWillPop: () async => false,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6DFD7D),
+                      ),
+                    ),
+                  ),
                 ),
               );
-              await provider.deleteProgram(programId);
-              if (context.mounted) Navigator.pop(context); // Close loading
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+
+              try {
+                // Perform deletion
+                debugPrint('🔄 Starting deletion process...');
+                await provider.deleteProgramWithCalendar(program);
+                debugPrint('✅ Deletion process complete');
+
+                // Close loading dialog using saved navigator
+                loadingNavigator.pop();
+                debugPrint('🔄 Loading dialog closed');
+
+                // Show success message using saved scaffold messenger
+                scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('$programName deleted successfully'),
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('${program.name} deleted successfully'),
+                        ),
+                      ],
+                    ),
                     backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                debugPrint('❌ Error during deletion: $e');
+
+                // Close loading using saved navigator
+                loadingNavigator.pop();
+
+                // Show error message using saved scaffold messenger
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Error deleting program: $e'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

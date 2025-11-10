@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
 import '../providers/program_provider.dart';
@@ -18,14 +19,34 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
   TimeOfDay _workoutTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _reminderTime = const TimeOfDay(hour: 8, minute: 30);
 
+  static const String _calendarKey = 'calendar_enabled';
+  static const String _notifKey = 'notifications_enabled';
+
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _checkPermissions();
   }
 
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _calendarEnabled = prefs.getBool(_calendarKey) ?? false;
+      _notificationsEnabled = prefs.getBool(_notifKey) ?? false;
+    });
+  }
+  Future<void> _saveCalendar(bool val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_calendarKey, val);
+  }
+  Future<void> _saveNotif(bool val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notifKey, val);
+  }
+
   Future<void> _checkPermissions() async {
-    // Implement permission check logic here
+    // Implement permission check logic if needed
   }
 
   @override
@@ -89,11 +110,13 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                         final hasPermission = await CalendarService.requestPermissions();
                         if (hasPermission) {
                           setState(() => _calendarEnabled = true);
+                          await _saveCalendar(true);
                         } else {
                           _showPermissionDialog('Calendar');
                         }
                       } else {
                         setState(() => _calendarEnabled = false);
+                        await _saveCalendar(false);
                       }
                     },
                   ),
@@ -161,12 +184,14 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
                         final hasPermission = await NotificationService.requestPermission();
                         if (hasPermission) {
                           setState(() => _notificationsEnabled = true);
+                          await _saveNotif(true);
                           _scheduleReminders();
                         } else {
                           _showPermissionDialog('Notifications');
                         }
                       } else {
                         setState(() => _notificationsEnabled = false);
+                        await _saveNotif(false);
                         await NotificationService.cancelAllNotifications();
                       }
                     },
@@ -217,7 +242,6 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
               ),
             ),
 
-            // Info Card
             Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(16),
@@ -317,7 +341,6 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
       );
     }
   }
-
   Future<void> _scheduleReminders() async {
     await NotificationService.scheduleDailyReminder(
       id: 1,
@@ -326,7 +349,6 @@ class _CalendarSettingsScreenState extends State<CalendarSettingsScreen> {
       time: _reminderTime,
     );
   }
-
   void _showPermissionDialog(String permissionType) {
     showDialog(
       context: context,
