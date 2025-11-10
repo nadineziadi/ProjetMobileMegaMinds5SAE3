@@ -1,8 +1,18 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 
-// Import your real module pages here
+// Import screens from user/screens folder
+import 'pages/user/screens/splash_screen.dart';
+import 'pages/user/screens/login_screen.dart';
+import 'pages/user/screens/register_screen_1.dart';
+import 'pages/user/screens/register_screen_2.dart';
+import 'pages/user/screens/register_screen_3.dart';
+import 'pages/user/screens/dashboard_screen.dart';
+import 'pages/user/screens/profile_screen.dart';
+import 'pages/user/screens/settings_screen.dart';
+
+// Import module pages
 import 'pages/user/dashboard_page.dart';
 import 'pages/workout/workouts_page.dart';
 import 'pages/nutrition/nutrition_page.dart';
@@ -13,28 +23,60 @@ import 'pages/supplements/supplements_page.dart';
 void main() {
   runApp(
     DevicePreview(
-      enabled: true, // or !kReleaseMode if you import foundation
-      builder: (context) => const FitLifeApp(),
+      enabled: !kReleaseMode, // Enabled only in debug mode
+      builder: (context) => const GyminiApp(),
     ),
   );
 }
 
-class FitLifeApp extends StatelessWidget {
-  const FitLifeApp({super.key});
+class GyminiApp extends StatelessWidget {
+  const GyminiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // DevicePreview configuration
+      useInheritedMediaQuery: true,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
+      
+      title: 'GYMINI - FitLife Tracker',
       debugShowCheckedModeBanner: false,
-      title: 'FitLife Tracker',
+      
       theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFFa3e635),
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: const Color(0xFF1a1a1a),
+        fontFamily: 'System',
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFFa3e635),
+          secondary: const Color(0xFFC7F000),
+        ),
       ),
-      home: const HomeTabs(),
+      
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen1(),
+        '/register2': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return RegisterScreen2(previousData: args);
+        },
+        '/register3': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          return RegisterScreen3(userData: args);
+        },
+        '/dashboard': (context) => const DashboardScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/settings': (context) => SettingsScreen(),
+      },
     );
   }
 }
 
+// Main navigation with bottom tabs
 class HomeTabs extends StatefulWidget {
   const HomeTabs({super.key});
 
@@ -63,10 +105,19 @@ class _HomeTabsState extends State<HomeTabs> {
     Icons.local_hospital_rounded,
   ];
 
+  final List<String> _labels = [
+    'Dashboard',
+    'Workouts',
+    'Nutrition',
+    'Programs',
+    'Mental Health',
+    'Supplements',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // This allows the body to extend behind the navbar
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -81,7 +132,7 @@ class _HomeTabsState extends State<HomeTabs> {
         child: _pages[_currentIndex],
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16), // Add margin for floating effect
+        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF1E2124),
           boxShadow: [
@@ -91,7 +142,7 @@ class _HomeTabsState extends State<HomeTabs> {
               offset: const Offset(0, -5),
             ),
           ],
-          borderRadius: BorderRadius.circular(24), // Full circular border
+          borderRadius: BorderRadius.circular(24),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -105,8 +156,9 @@ class _HomeTabsState extends State<HomeTabs> {
             unselectedItemColor: Colors.grey[600],
             showSelectedLabels: false,
             showUnselectedLabels: false,
-            items: _icons.map((icon) {
-              int index = _icons.indexOf(icon);
+            items: _icons.asMap().entries.map((entry) {
+              int index = entry.key;
+              IconData icon = entry.value;
               bool isSelected = _currentIndex == index;
               
               return BottomNavigationBarItem(
@@ -125,7 +177,7 @@ class _HomeTabsState extends State<HomeTabs> {
                     size: isSelected ? 28 : 24,
                   ),
                 ),
-                label: '',
+                label: _labels[index],
               );
             }).toList(),
           ),
