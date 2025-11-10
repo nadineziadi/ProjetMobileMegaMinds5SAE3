@@ -27,8 +27,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUser() async {
     await _userService.init();
+    final user = await _userService.getCurrentUser(); // Ajout de await
     setState(() {
-      _currentUser = _userService.getCurrentUser();
+      _currentUser = user;
       if (_currentUser != null) {
         _nameController.text = _currentUser!.name;
         _ageController.text = _currentUser!.age.toString();

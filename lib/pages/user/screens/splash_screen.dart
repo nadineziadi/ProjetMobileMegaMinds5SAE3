@@ -1,114 +1,146 @@
-// ============================================
-// 3. ÉCRAN SPLASH (lib/screens/splash_screen.dart)
-// ============================================
-
 import 'package:flutter/material.dart';
-import 'dart:async';
+import '../services/user_service.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> 
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
-
-    _controller.forward();
-
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/login');
-    });
+    _initializeApp();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _initializeApp() async {
+    try {
+      print('🚀 Initializing app...');
+      
+      // Initialiser UserService avec timeout
+      final userService = UserService();
+      await userService.init().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('⚠️ UserService init timeout - continuing anyway');
+        },
+      );
+      
+      print('✅ UserService initialized');
+      
+      // Attendre 1 seconde pour l'effet splash
+      await Future.delayed(const Duration(seconds: 1));
+      
+      // Vérifier si l'utilisateur est connecté
+      bool isLoggedIn = false;
+      try {
+        isLoggedIn = await userService.isLoggedIn().timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => false,
+        );
+      } catch (e) {
+        print('⚠️ Error checking login status: $e');
+        isLoggedIn = false;
+      }
+      
+      print('👤 User logged in: $isLoggedIn');
+      
+      if (!mounted) return;
+      
+      // Navigation
+      if (isLoggedIn) {
+        print('📍 Navigating to dashboard');
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        print('📍 Navigating to login');
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (e) {
+      print('❌ Error during initialization: $e');
+      
+      // En cas d'erreur, aller vers login après 1 seconde
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (mounted) {
+        print('📍 Error recovery - navigating to login');
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1a1a1a),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1a1a1a),
-              Color(0xFF2d2d2d),
-              Color(0xFF000000),
+              Color(0xFF32383E),
+              Color(0xFF17191C),
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: Center(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    '🏋️',
-                    style: TextStyle(fontSize: 100),
-                  ),
-                  const SizedBox(height: 24),
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFFa3e635), Color(0xFF22c55e)],
-                    ).createShader(bounds),
-                    child: const Text(
-                      'GYMINI',
-                      style: TextStyle(
-                        fontSize: 56,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Votre Coach Personnel',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: 200,
-                    child: LinearProgressIndicator(
-                      backgroundColor: Colors.grey[800],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFFa3e635),
-                      ),
-                    ),
-                  ),
-                ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo Icon
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFa3e635).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Icon(
+                  Icons.fitness_center_rounded,
+                  size: 80,
+                  color: Color(0xFFa3e635),
+                ),
               ),
-            ),
+              const SizedBox(height: 32),
+              
+              // App Name
+              const Text(
+                'GYMINI',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Tagline
+              const Text(
+                'Your Personal Fitness Tracker',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 48),
+              
+              // Loading Indicator
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFa3e635)),
+              ),
+              const SizedBox(height: 16),
+              
+              const Text(
+                'Chargement...',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
       ),

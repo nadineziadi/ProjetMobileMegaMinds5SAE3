@@ -1,56 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'dart:convert';
 
-part 'user_model.g.dart';
+enum UserRole {
+  admin,
+  user,
+}
 
-@HiveType(typeId: 0)
-class UserProfile extends HiveObject {
-  @HiveField(0)
+class UserProfile {
   String id;
-
-  @HiveField(1)
   String name;
-
-  @HiveField(2)
   String email;
-
-  @HiveField(3)
+  String password;
+  UserRole role; // NOUVEAU : Rôle de l'utilisateur
   int age;
-
-  @HiveField(4)
   double weight;
-
-  @HiveField(5)
   double height;
-
-  @HiveField(6)
-  String gender; // 'male' ou 'female'
-
-  @HiveField(7)
-  String fitnessLevel; // 'beginner', 'intermediate', 'advanced'
-
-  @HiveField(8)
-  String goal; // 'weight_loss', 'muscle_gain', 'maintenance', 'endurance'
-
-  @HiveField(9)
+  String gender;
+  String fitnessLevel;
+  String goal;
   String? avatarUrl;
-
-  @HiveField(10)
   DateTime createdAt;
-
-  @HiveField(11)
   DateTime lastUpdated;
-
-  @HiveField(12)
   List<WeightEntry> weightHistory;
-
-  @HiveField(13)
   List<String> badges;
 
   UserProfile({
     required this.id,
     required this.name,
     required this.email,
+    required this.password,
+    this.role = UserRole.user, // Par défaut: utilisateur normal
     required this.age,
     required this.weight,
     required this.height,
@@ -62,8 +41,10 @@ class UserProfile extends HiveObject {
     required this.lastUpdated,
     List<WeightEntry>? weightHistory,
     List<String>? badges,
-  }) : weightHistory = weightHistory ?? [],
-       badges = badges ?? [];
+  })  : weightHistory = weightHistory ?? [],
+        badges = badges ?? [];
+
+  bool get isAdmin => role == UserRole.admin;
 
   double get bmi => weight / ((height / 100) * (height / 100));
 
@@ -93,59 +74,62 @@ class UserProfile extends HiveObject {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'email': email,
-    'age': age,
-    'weight': weight,
-    'height': height,
-    'gender': gender,
-    'fitnessLevel': fitnessLevel,
-    'goal': goal,
-    'avatarUrl': avatarUrl,
-    'createdAt': createdAt.toIso8601String(),
-    'lastUpdated': lastUpdated.toIso8601String(),
-    'weightHistory': weightHistory.map((e) => e.toJson()).toList(),
-    'badges': badges,
-  };
+        'id': id,
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role.name, // Sauvegarder le rôle
+        'age': age,
+        'weight': weight,
+        'height': height,
+        'gender': gender,
+        'fitnessLevel': fitnessLevel,
+        'goal': goal,
+        'avatarUrl': avatarUrl,
+        'createdAt': createdAt.toIso8601String(),
+        'lastUpdated': lastUpdated.toIso8601String(),
+        'weightHistory': weightHistory.map((e) => e.toJson()).toList(),
+        'badges': badges,
+      };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-    id: json['id'],
-    name: json['name'],
-    email: json['email'],
-    age: json['age'],
-    weight: json['weight'].toDouble(),
-    height: json['height'].toDouble(),
-    gender: json['gender'],
-    fitnessLevel: json['fitnessLevel'],
-    goal: json['goal'],
-    avatarUrl: json['avatarUrl'],
-    createdAt: DateTime.parse(json['createdAt']),
-    lastUpdated: DateTime.parse(json['lastUpdated']),
-    weightHistory: (json['weightHistory'] as List)
-        .map((e) => WeightEntry.fromJson(e))
-        .toList(),
-    badges: List<String>.from(json['badges']),
-  );
+        id: json['id'] as String,
+        name: json['name'] as String,
+        email: json['email'] as String,
+        password: json['password'] as String,
+        role: UserRole.values.firstWhere(
+          (e) => e.name == json['role'],
+          orElse: () => UserRole.user,
+        ),
+        age: json['age'] as int,
+        weight: (json['weight'] as num).toDouble(),
+        height: (json['height'] as num).toDouble(),
+        gender: json['gender'] as String,
+        fitnessLevel: json['fitnessLevel'] as String,
+        goal: json['goal'] as String,
+        avatarUrl: json['avatarUrl'] as String?,
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+        weightHistory: (json['weightHistory'] as List)
+            .map((e) => WeightEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        badges: List<String>.from(json['badges'] as List),
+      );
 }
 
-@HiveType(typeId: 1)
-class WeightEntry extends HiveObject {
-  @HiveField(0)
+class WeightEntry {
   DateTime date;
-
-  @HiveField(1)
   double weight;
 
   WeightEntry({required this.date, required this.weight});
 
   Map<String, dynamic> toJson() => {
-    'date': date.toIso8601String(),
-    'weight': weight,
-  };
+        'date': date.toIso8601String(),
+        'weight': weight,
+      };
 
   factory WeightEntry.fromJson(Map<String, dynamic> json) => WeightEntry(
-    date: DateTime.parse(json['date']),
-    weight: json['weight'].toDouble(),
-  );
+        date: DateTime.parse(json['date'] as String),
+        weight: (json['weight'] as num).toDouble(),
+      );
 }

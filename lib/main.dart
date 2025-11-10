@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 
@@ -9,6 +9,7 @@ import 'pages/user/screens/register_screen_1.dart';
 import 'pages/user/screens/register_screen_2.dart';
 import 'pages/user/screens/register_screen_3.dart';
 import 'pages/user/screens/dashboard_screen.dart';
+import 'pages/user/screens/admin_dashboard_screen.dart';
 import 'pages/user/screens/profile_screen.dart';
 import 'pages/user/screens/settings_screen.dart';
 
@@ -20,10 +21,13 @@ import 'pages/program/programs_page.dart';
 import 'pages/mental health/mental_health_page.dart';
 import 'pages/supplements/supplements_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  print('🚀 Starting GYMINI App...');
+  
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode, // Enabled only in debug mode
+      enabled: !kReleaseMode, // Activé en mode debug uniquement
       builder: (context) => const GyminiApp(),
     ),
   );
@@ -34,8 +38,10 @@ class GyminiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('📱 Building GyminiApp...');
+    
     return MaterialApp(
-      // DevicePreview configuration
+      // Configuration DevicePreview
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
@@ -57,8 +63,14 @@ class GyminiApp extends StatelessWidget {
       
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/': (context) {
+          print('📍 Navigating to SplashScreen');
+          return const SplashScreen();
+        },
+        '/login': (context) {
+          print('📍 Navigating to LoginScreen');
+          return const LoginScreen();
+        },
         '/register': (context) => const RegisterScreen1(),
         '/register2': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -68,9 +80,22 @@ class GyminiApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return RegisterScreen3(userData: args);
         },
-        '/dashboard': (context) => const DashboardScreen(),
+        '/dashboard': (context) {
+          print('📍 Navigating to HomeTabs');
+          return const HomeTabs();
+        },
+        '/oldDashboard': (context) => const DashboardScreen(),
+        '/adminDashboard': (context) => const AdminDashboardScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/settings': (context) => SettingsScreen(),
+      },
+      
+      // Handler pour routes inexistantes
+      onUnknownRoute: (settings) {
+        print('❌ Unknown route: ${settings.name}');
+        return MaterialPageRoute(
+          builder: (context) => const SplashScreen(),
+        );
       },
     );
   }

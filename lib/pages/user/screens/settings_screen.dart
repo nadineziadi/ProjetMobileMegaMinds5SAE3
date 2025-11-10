@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 
-class SettingsScreen extends StatelessWidget {
-  final _userService = UserService();
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
 
-  SettingsScreen({Key? key}) : super(key: key);
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _userService = UserService();
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminStatus();
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final user = await _userService.getCurrentUser();
+    setState(() {
+      _isAdmin = user?.isAdmin ?? false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +41,36 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // Section Admin (si admin)
+          if (_isAdmin) ...[
+            _buildSettingsSection(
+              title: 'Administration',
+              items: [
+                _buildSettingsItem(
+                  context,
+                  icon: Icons.admin_panel_settings,
+                  title: 'Dashboard Admin',
+                  iconColor: Colors.amber,
+                  titleColor: Colors.amber,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/admin_dashboard');
+                  },
+                ),
+                _buildSettingsItem(
+                  context,
+                  icon: Icons.people,
+                  title: 'Gérer les utilisateurs',
+                  iconColor: Colors.amber,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/admin_dashboard');
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+          
+          // Account Section
           _buildSettingsSection(
             title: 'Account',
             items: [
@@ -51,6 +100,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           
+          // Help Section
           _buildSettingsSection(
             title: 'Help',
             items: [
@@ -66,27 +116,14 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Send Feedback',
                 onTap: () {},
               ),
-              _buildSettingsItem(
-                context,
-                icon: Icons.description,
-                title: 'Terms & Conditions',
-                onTap: () {},
-              ),
             ],
           ),
           const SizedBox(height: 24),
           
+          // Danger Zone
           _buildSettingsSection(
             title: 'Danger Zone',
             items: [
-              _buildSettingsItem(
-                context,
-                icon: Icons.delete_forever,
-                title: 'Delete Account',
-                iconColor: Colors.red,
-                titleColor: Colors.red,
-                onTap: () => _showDeleteAccountDialog(context),
-              ),
               _buildSettingsItem(
                 context,
                 icon: Icons.logout,
@@ -125,9 +162,7 @@ class SettingsScreen extends StatelessWidget {
             color: const Color(0xFF2d2d2d),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            children: items,
-          ),
+          child: Column(children: items),
         ),
       ],
     );
@@ -148,11 +183,7 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: iconColor ?? Colors.grey,
-              size: 24,
-            ),
+            Icon(icon, color: iconColor ?? Colors.grey, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -171,26 +202,13 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _logout(BuildContext context) async {
-    await _userService.init();
-    await _userService.logout();
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
-  }
-
-  void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2d2d2d),
-        title: const Text(
-          'Supprimer le compte',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Déconnexion', style: TextStyle(color: Colors.white)),
         content: const Text(
-          'Êtes-vous sûr de vouloir supprimer votre compte? Cette action est irréversible.',
+          'Êtes-vous sûr de vouloir vous déconnecter?',
           style: TextStyle(color: Colors.grey),
         ),
         actions: [
@@ -199,14 +217,13 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Delete account logic here
-              Navigator.pop(context);
+            onPressed: () async {
+              await _userService.logout();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.pushReplacementNamed(context, '/login');
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Supprimer'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Déconnexion'),
           ),
         ],
       ),

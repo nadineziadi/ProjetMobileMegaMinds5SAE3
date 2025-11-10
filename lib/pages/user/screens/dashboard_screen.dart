@@ -23,8 +23,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadUser() async {
     await _userService.init();
+    final user = await _userService.getCurrentUser(); // Ajout de await
     setState(() {
-      _currentUser = _userService.getCurrentUser();
+      _currentUser = user;
     });
   }
 
@@ -248,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     label: 'Navigation\ncomplète',
                     color: Colors.purple,
                     onTap: () {
-                      Navigator.pushNamed(context, '/hometabs');
+                      Navigator.pushReplacementNamed(context, '/dashboard');
                     },
                   ),
                 ),
@@ -431,8 +432,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () async {
               final weight = double.tryParse(controller.text);
               if (weight != null) {
-                await _userService.addWeightEntry(weight);
-                setState(() => _currentUser = _userService.getCurrentUser());
+                final user = await _userService.getCurrentUser();
+                if (user != null) {
+                  user.weight = weight;
+                  user.weightHistory.add(WeightEntry(date: DateTime.now(), weight: weight));
+                  await _userService.updateUser(user);
+                  
+                  final updatedUser = await _userService.getCurrentUser();
+                  setState(() => _currentUser = updatedUser);
+                }
                 Navigator.pop(context);
               }
             },
