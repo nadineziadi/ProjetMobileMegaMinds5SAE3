@@ -1,0 +1,125 @@
+# name: gymini
+# description: "A new Flutter project."
+# publish_to: 'none'
+
+# version: 1.0.0+1
+
+# environment:
+#   sdk: ^3.9.2
+
+# dependencies:
+#   flutter:
+#     sdk: flutter
+
+#   # Health tracking (version mise à jour)
+#   health: ^13.2.1
+
+#   # UI & Icons
+#   cupertino_icons: ^1.0.8
+
+#   # Device Preview
+#   device_preview: ^1.1.0
+
+#   # ===== MENTAL HEALTH MODULE DEPENDENCIES =====
+
+#   # HTTP & API (Pour ZenQuotes API et autres appels API)
+#   http: ^1.1.0
+
+#   # Base de données locale (Pour stocker l'historique des humeurs)
+#   sqflite: ^2.3.0
+#   path_provider: ^2.1.1
+
+#   # Stockage simple (Pour les préférences utilisateur)
+#   shared_preferences: ^2.2.2
+
+#   # Formatage dates et nombres
+#   intl: ^0.20.2
+
+#   # Graphiques (Optionnel - Pour visualiser l'historique d'humeur)
+#   fl_chart: ^0.65.0
+
+# dev_dependencies:
+#   flutter_test:
+#     sdk: flutter
+#   flutter_lints: ^5.0.0
+
+# flutter:
+#   uses-material-design: true
+
+#   # Assets pour le module Mental Health
+#   assets:
+#     - assets/images/
+#     - assets/icons/
+
+name: gymini
+description: "FitLife Tracker - Complete Mental Health Module"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+
+  # Device Preview
+  device_preview: ^1.1.0
+
+  # ===== MENTAL HEALTH MODULE DEPENDENCIES =====
+
+  # HTTP & API (Pour ZenQuotes API)
+  http: ^1.2.0
+
+  # Base de données locale (SQFlite - avec support desktop)
+  sqflite: ^2.3.2
+  sqflite_common_ffi: ^2.3.1+2
+  path: ^1.8.3
+  path_provider: ^2.1.2
+
+  # Stockage simple (Préférences utilisateur)
+  shared_preferences: ^2.2.2
+
+  # Formatage dates et nombres
+  intl: ^0.20.2
+
+  # Graphiques (Pour visualiser l'historique)
+  fl_chart: ^0.66.2
+
+  # Health tracking (Google Fit / Health Connect)
+  health: ^13.2.1
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # State Management (Provider)
+  provider: ^6.1.1
+
+  # UUID pour génération d'IDs
+  uuid: ^4.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+
+  # Assets pour le module Mental Health
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/audio/
+
+  # Fonts (optionnel)
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: fonts/Poppins-Regular.ttf
+  #       - asset: fonts/Poppins-Bold.ttf
+  #         weight: 700
