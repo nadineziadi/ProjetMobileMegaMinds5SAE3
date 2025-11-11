@@ -1,386 +1,7 @@
-// import 'package:flutter/material.dart';
-
-// class MentalHealthDashboard extends StatefulWidget {
-//   const MentalHealthDashboard({Key? key}) : super(key: key);
-
-//   @override
-//   State<MentalHealthDashboard> createState() => _MentalHealthDashboardState();
-// }
-
-// class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
-//   String _selectedPeriod = 'Daily';
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFF1E1E1E),
-//       appBar: AppBar(
-//         backgroundColor: const Color(0xFF1E1E1E),
-//         elevation: 0,
-//         leading: const Icon(Icons.arrow_back, color: Colors.white),
-//         actions: [
-//           Stack(
-//             children: [
-//               IconButton(
-//                 icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-//                 onPressed: () {},
-//               ),
-//               Positioned(
-//                 right: 8,
-//                 top: 8,
-//                 child: Container(
-//                   width: 10,
-//                   height: 10,
-//                   decoration: const BoxDecoration(
-//                     color: Color(0xFFD4FF00),
-//                     shape: BoxShape.circle,
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ],
-//       ),
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(20),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             // Greeting
-//             Row(
-//               children: [
-//                 CircleAvatar(
-//                   radius: 24,
-//                   backgroundColor: Colors.grey[800],
-//                   child: const Icon(Icons.person, color: Colors.white),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 const Text(
-//                   'Hey Emily,',
-//                   style: TextStyle(
-//                     color: Colors.white,
-//                     fontSize: 28,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//               ],
-//             ),
-
-//             const SizedBox(height: 24),
-
-//             // Period Selector
-//             Row(
-//               children: [
-//                 _buildPeriodButton('Daily'),
-//                 const SizedBox(width: 8),
-//                 _buildPeriodButton('Weekly'),
-//                 const SizedBox(width: 8),
-//                 _buildPeriodButton('Monthly'),
-//               ],
-//             ),
-
-//             const SizedBox(height: 24),
-
-//             // Mental Health Score Card
-//             Container(
-//               padding: const EdgeInsets.all(20),
-//               decoration: BoxDecoration(
-//                 color: const Color(0xFF2D4A4A),
-//                 borderRadius: BorderRadius.circular(20),
-//               ),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   const Text(
-//                     'Mental Health',
-//                     style: TextStyle(
-//                       color: Colors.white,
-//                       fontSize: 20,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   Row(
-//                     children: [
-//                       // Circular Progress
-//                       Stack(
-//                         alignment: Alignment.center,
-//                         children: [
-//                           SizedBox(
-//                             width: 100,
-//                             height: 100,
-//                             child: CircularProgressIndicator(
-//                               value: 0.9254,
-//                               strokeWidth: 10,
-//                               backgroundColor: Colors.white24,
-//                               valueColor: const AlwaysStoppedAnimation<Color>(
-//                                 Color(0xFF7FDBDA),
-//                               ),
-//                             ),
-//                           ),
-//                           const Column(
-//                             mainAxisSize: MainAxisSize.min,
-//                             children: [
-//                               Text(
-//                                 '92.54%',
-//                                 style: TextStyle(
-//                                   color: Colors.white,
-//                                   fontSize: 20,
-//                                   fontWeight: FontWeight.bold,
-//                                 ),
-//                               ),
-//                               Text(
-//                                 'Mental',
-//                                 style: TextStyle(
-//                                   color: Colors.white70,
-//                                   fontSize: 12,
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ],
-//                       ),
-//                       const SizedBox(width: 20),
-//                       // Icon
-//                       Expanded(
-//                         child: Column(
-//                           children: [
-//                             const Text(
-//                               'More\nPositivity',
-//                               textAlign: TextAlign.center,
-//                               style: TextStyle(
-//                                 color: Colors.white,
-//                                 fontSize: 16,
-//                                 fontWeight: FontWeight.w600,
-//                               ),
-//                             ),
-//                             const SizedBox(height: 8),
-//                             Container(
-//                               padding: const EdgeInsets.all(12),
-//                               decoration: BoxDecoration(
-//                                 color: const Color(0xFF3D5A5A),
-//                                 borderRadius: BorderRadius.circular(12),
-//                               ),
-//                               child: const Icon(
-//                                 Icons.self_improvement,
-//                                 color: Color(0xFF7FDBDA),
-//                                 size: 40,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             const SizedBox(height: 16),
-
-//             // Stats Grid
-//             Row(
-//               children: [
-//                 Expanded(
-//                   child: _buildStatCard(
-//                     '470',
-//                     'kcal',
-//                     'Calories',
-//                     Icons.local_fire_department,
-//                     const Color(0xFFFF6B6B),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 Expanded(
-//                   child: _buildStatCard(
-//                     '618',
-//                     'kcal',
-//                     'Nutrition',
-//                     Icons.restaurant,
-//                     const Color(0xFFD4FF00),
-//                   ),
-//                 ),
-//               ],
-//             ),
-
-//             const SizedBox(height: 12),
-
-//             Row(
-//               children: [
-//                 Expanded(
-//                   child: _buildStatCard(
-//                     '8h 30m',
-//                     '',
-//                     'Sleep\nDuration',
-//                     Icons.bedtime,
-//                     const Color(0xFF7B68EE),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 12),
-//                 Expanded(
-//                   child: _buildStatCard(
-//                     '70',
-//                     'bpm',
-//                     'Heart Rate',
-//                     Icons.favorite,
-//                     const Color(0xFFFF69B4),
-//                   ),
-//                 ),
-//               ],
-//             ),
-
-//             const SizedBox(height: 80),
-//           ],
-//         ),
-//       ),
-//       bottomNavigationBar: _buildBottomNavBar(),
-//     );
-//   }
-
-//   Widget _buildPeriodButton(String period) {
-//     final isSelected = _selectedPeriod == period;
-    
-//     return GestureDetector(
-//       onTap: () {
-//         setState(() {
-//           _selectedPeriod = period;
-//         });
-//       },
-//       child: Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//         decoration: BoxDecoration(
-//           color: isSelected ? const Color(0xFFD4FF00) : const Color(0xFF2A2A2A),
-//           borderRadius: BorderRadius.circular(20),
-//         ),
-//         child: Text(
-//           period,
-//           style: TextStyle(
-//             color: isSelected ? Colors.black : Colors.white,
-//             fontWeight: FontWeight.w600,
-//             fontSize: 14,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildStatCard(
-//     String value,
-//     String unit,
-//     String label,
-//     IconData icon,
-//     Color color,
-//   ) {
-//     return Container(
-//       padding: const EdgeInsets.all(16),
-//       decoration: BoxDecoration(
-//         color: const Color(0xFF2D4A4A),
-//         borderRadius: BorderRadius.circular(16),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Row(
-//                     crossAxisAlignment: CrossAxisAlignment.end,
-//                     children: [
-//                       Text(
-//                         value,
-//                         style: const TextStyle(
-//                           color: Colors.white,
-//                           fontSize: 24,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                       if (unit.isNotEmpty)
-//                         Padding(
-//                           padding: const EdgeInsets.only(left: 4, bottom: 2),
-//                           child: Text(
-//                             unit,
-//                             style: const TextStyle(
-//                               color: Colors.white70,
-//                               fontSize: 12,
-//                             ),
-//                           ),
-//                         ),
-//                     ],
-//                   ),
-//                   const SizedBox(height: 4),
-//                   Text(
-//                     label,
-//                     style: const TextStyle(
-//                       color: Colors.white70,
-//                       fontSize: 12,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//               Container(
-//                 padding: const EdgeInsets.all(12),
-//                 decoration: BoxDecoration(
-//                   color: color.withOpacity(0.2),
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: Icon(
-//                   icon,
-//                   color: color,
-//                   size: 28,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildBottomNavBar() {
-//     return Container(
-//       decoration: const BoxDecoration(
-//         color: Color(0xFF2A2A2A),
-//         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-//       ),
-//       child: SafeArea(
-//         child: Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-//           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceAround,
-//             children: [
-//               _buildNavItem(Icons.home_outlined, false),
-//               _buildNavItem(Icons.explore_outlined, false),
-//               _buildNavItem(Icons.circle_outlined, false),
-//               _buildNavItem(Icons.calendar_today_outlined, true),
-//               _buildNavItem(Icons.account_circle_outlined, false),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildNavItem(IconData icon, bool isHighlighted) {
-//     return Container(
-//       padding: const EdgeInsets.all(12),
-//       decoration: BoxDecoration(
-//         color: isHighlighted ? const Color(0xFFD4FF00) : Colors.transparent,
-//         borderRadius: BorderRadius.circular(12),
-//       ),
-//       child: Icon(
-//         icon,
-//         color: isHighlighted ? Colors.black : Colors.white,
-//         size: 24,
-//       ),
-//     );
-//   }
-// }
 // lib/pages/mental_health/mental_health_dashboard.dart
 
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../models/mental_health_models.dart';
 import '../../services/mental_health_service.dart';
 
@@ -397,6 +18,7 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
   
   MentalHealthStats? _currentStats;
   Map<String, dynamic>? _moodStats;
+  List<MoodEntry> _moodHistory = [];
   bool _isLoading = true;
 
   @override
@@ -411,10 +33,12 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
     try {
       final stats = await _service.getMentalHealthStats();
       final moodStats = await _service.getMoodStatistics(days: 30);
+      final history = await _service.getMoodHistory(days: 7);
       
       setState(() {
         _currentStats = stats;
         _moodStats = moodStats;
+        _moodHistory = history;
         _isLoading = false;
       });
     } catch (e) {
@@ -433,6 +57,14 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Mental Health Dashboard',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           Stack(
@@ -533,6 +165,11 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
 
                     const SizedBox(height: 16),
 
+                    // NOUVEAU: Mood Trend Chart
+                    _buildMoodTrendChart(),
+
+                    const SizedBox(height: 16),
+
                     // Stats Grid
                     Row(
                       children: [
@@ -589,6 +226,11 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
                     // Mood Statistics
                     if (_moodStats != null) _buildMoodStatsCard(),
 
+                    const SizedBox(height: 16),
+
+                    // NOUVEAU: Mood Distribution Pie Chart
+                    if (_moodStats != null) _buildMoodDistributionChart(),
+
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -606,6 +248,328 @@ class _MentalHealthDashboardState extends State<MentalHealthDashboard> {
         ),
       ),
     );
+  }
+
+  // NOUVEAU: Graphique de tendance des humeurs
+  Widget _buildMoodTrendChart() {
+    if (_moodHistory.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2D4A4A),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Mood Trend',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4FF00).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Last 7 Days',
+                  style: TextStyle(
+                    color: Color(0xFFD4FF00),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 1,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.white.withOpacity(0.1),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= 0 && value.toInt() < _moodHistory.length) {
+                          final date = _moodHistory[value.toInt()].date;
+                          final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              days[(date.weekday - 1) % 7],
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 10,
+                              ),
+                            ),
+                          );
+                        }
+                        return const Text('');
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (_moodHistory.length - 1).toDouble(),
+                minY: 0,
+                maxY: 5,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: _moodHistory.asMap().entries.map((entry) {
+                      return FlSpot(
+                        entry.key.toDouble(),
+                        entry.value.intensity.toDouble(),
+                      );
+                    }).toList(),
+                    isCurved: true,
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFD4FF00),
+                        Color(0xFF7FDBDA),
+                      ],
+                    ),
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 6,
+                          color: const Color(0xFFD4FF00),
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFD4FF00).withOpacity(0.3),
+                          const Color(0xFF7FDBDA).withOpacity(0.1),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegendItem('Intensity', Color(0xFFD4FF00)),
+              const SizedBox(width: 16),
+              Text(
+                '(1=Low, 5=High)',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // NOUVEAU: Graphique de distribution des humeurs (Pie Chart)
+  Widget _buildMoodDistributionChart() {
+    final moodDistribution = _moodStats!['moodDistribution'] as Map<String, int>;
+    
+    if (moodDistribution.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2D4A4A),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mood Distribution',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                      sections: _createPieSections(moodDistribution),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: moodDistribution.entries.map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: _getMoodColor(entry.key),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '${entry.key} (${entry.value})',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<PieChartSectionData> _createPieSections(Map<String, int> distribution) {
+    final total = distribution.values.reduce((a, b) => a + b);
+    
+    return distribution.entries.map((entry) {
+      final percentage = (entry.value / total * 100).toStringAsFixed(1);
+      
+      return PieChartSectionData(
+        color: _getMoodColor(entry.key),
+        value: entry.value.toDouble(),
+        title: '$percentage%',
+        radius: 60,
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+  }
+
+  Color _getMoodColor(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'happy':
+        return const Color(0xFFFFD700);
+      case 'stressed':
+        return const Color(0xFFFF6B6B);
+      case 'tired':
+        return const Color(0xFF9B9B9B);
+      case 'motivated':
+        return const Color(0xFF4CAF50);
+      case 'calm':
+        return const Color(0xFFB8B5FF);
+      case 'excited':
+        return const Color(0xFFFFA500);
+      default:
+        return const Color(0xFF87CEEB);
+    }
   }
 
   Widget _buildMentalHealthCard() {

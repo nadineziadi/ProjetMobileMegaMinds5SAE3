@@ -1,4 +1,8 @@
+// lib/pages/mental_health/wellness_hub_screen.dart
+
 import 'package:flutter/material.dart';
+import '../../models/mental_health_models.dart';
+import '../../services/mental_health_service.dart';
 
 class WellnessHubScreen extends StatefulWidget {
   const WellnessHubScreen({Key? key}) : super(key: key);
@@ -9,35 +13,154 @@ class WellnessHubScreen extends StatefulWidget {
 
 class _WellnessHubScreenState extends State<WellnessHubScreen> {
   int _selectedFilterIndex = 0;
+  final MentalHealthService _service = MentalHealthService();
   
-  final List<String> _filters = ['Therapy', 'Relationship', 'Self-Care', 'Work'];
+  List<WellnessPost> _posts = [];
+  bool _isLoading = true;
+  
+  final List<String> _filters = ['All', 'Therapy', 'Relationship', 'Self-Care', 'Work'];
 
-  final List<Map<String, dynamic>> _posts = [
-    {
-      'author': 'Goal Ginger',
-      'time': '12 min',
-      'content': 'Is there a therapy which can cure onelessness & Edem compulsion?',
-      'likes': 2,
-      'comments': 0,
-      'avatar': Icons.person,
-    },
-    {
-      'author': 'Pigeon Car',
-      'time': '18 min',
-      'content': 'Is there a therapy which can cure onelessness & Edem compulsion?',
-      'likes': 18,
-      'comments': 0,
-      'avatar': Icons.person_outline,
-    },
-    {
-      'author': 'Plesan Car',
-      'time': '12 min',
-      'content': 'Is there a therapy which can cure onelessness & Edem compulsion?',
-      'likes': 15,
-      'comments': 35,
-      'avatar': Icons.person,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final category = _selectedFilterIndex == 0 
+          ? null 
+          : _filters[_selectedFilterIndex].toLowerCase();
+      
+      final posts = await _service.getWellnessPosts(category: category);
+      
+      setState(() {
+        _posts = posts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading posts: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleLike(WellnessPost post) async {
+    final success = await _service.togglePostLike(post);
+    if (success) {
+      _loadPosts(); // Recharger pour afficher les nouvelles données
+    }
+  }
+
+  void _showCreatePostDialog() {
+    String selectedCategory = 'therapy';
+    final TextEditingController contentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Share Your Wellness',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Category Selector
+              const Text(
+                'Category:',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: ['therapy', 'relationship', 'self-care', 'work']
+                    .map((category) => ChoiceChip(
+                          label: Text(category),
+                          selected: selectedCategory == category,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setDialogState(() {
+                                selectedCategory = category;
+                              });
+                            }
+                          },
+                          backgroundColor: const Color(0xFF1E1E1E),
+                          selectedColor: const Color(0xFFD4FF00),
+                          labelStyle: TextStyle(
+                            color: selectedCategory == category
+                                ? Colors.black
+                                : Colors.white,
+                            fontSize: 12,
+                          ),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              
+              // Content Field
+              TextField(
+                controller: contentController,
+                maxLines: 4,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Share your thoughts, questions, or experiences...',
+                  hintStyle: const TextStyle(color: Colors.white54),
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (contentController.text.isNotEmpty) {
+                  final success = await _service.createWellnessPost(
+                    contentController.text,
+                    selectedCategory,
+                  );
+                  
+                  if (success && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Post shared successfully!'),
+                        backgroundColor: Color(0xFF4CAF50),
+                      ),
+                    );
+                    _loadPosts();
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD4FF00),
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Share'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +169,10 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           'Wellness Hub',
           style: TextStyle(
@@ -98,6 +224,7 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
                       setState(() {
                         _selectedFilterIndex = index;
                       });
+                      _loadPosts();
                     },
                     backgroundColor: const Color(0xFF2A2A2A),
                     selectedColor: const Color(0xFFD4FF00),
@@ -118,27 +245,100 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
 
           // Posts List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _posts.length,
-              itemBuilder: (context, index) {
-                return _buildPostCard(_posts[index]);
-              },
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFD4FF00),
+                    ),
+                  )
+                : _posts.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        onRefresh: _loadPosts,
+                        color: const Color(0xFFD4FF00),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _posts.length,
+                          itemBuilder: (context, index) {
+                            return _buildPostCard(_posts[index]);
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showCreatePostDialog,
+        backgroundColor: const Color(0xFFD4FF00),
+        icon: const Icon(Icons.add, color: Colors.black),
+        label: const Text(
+          'Share',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.forum_outlined,
+            size: 80,
+            color: Colors.white.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No posts yet',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Be the first to share your wellness journey!',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _showCreatePostDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('Create Post'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD4FF00),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  Widget _buildPostCard(Map<String, dynamic> post) {
+  Widget _buildPostCard(WellnessPost post) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _getCategoryColor(post.category).withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,25 +346,61 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
           // Header
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.grey[700],
-                child: Icon(post['avatar'], color: Colors.white, size: 20),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getCategoryColor(post.category),
+                      _getCategoryColor(post.category).withOpacity(0.6),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  child: const Icon(Icons.person, color: Colors.white, size: 18),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      post['author'],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          post.author,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getCategoryColor(post.category).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            post.category,
+                            style: TextStyle(
+                              color: _getCategoryColor(post.category),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
-                      '${post['time']} ago',
+                      post.timeAgo,
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 12,
@@ -184,11 +420,11 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
 
           // Content
           Text(
-            post['content'],
+            post.content,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
-              height: 1.4,
+              height: 1.5,
             ),
           ),
 
@@ -197,19 +433,52 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
           // Actions
           Row(
             children: [
-              _buildActionButton(
-                Icons.thumb_up_outlined,
-                post['likes'].toString(),
+              GestureDetector(
+                onTap: () => _toggleLike(post),
+                child: Row(
+                  children: [
+                    Icon(
+                      post.isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: post.isLiked ? Colors.pink : Colors.white54,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${post.likes}',
+                      style: TextStyle(
+                        color: post.isLiked ? Colors.pink : Colors.white54,
+                        fontSize: 14,
+                        fontWeight: post.isLiked ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(width: 24),
-              _buildActionButton(
-                Icons.chat_bubble_outline,
-                post['comments'].toString(),
+              Row(
+                children: [
+                  const Icon(Icons.chat_bubble_outline, color: Colors.white54, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${post.comments}',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.share_outlined, color: Colors.white54),
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Share functionality coming soon!'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -218,58 +487,18 @@ class _WellnessHubScreenState extends State<WellnessHubScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String count) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white54, size: 20),
-        const SizedBox(width: 4),
-        Text(
-          count,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 14,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, false),
-              _buildNavItem(Icons.explore_outlined, false),
-              _buildNavItem(Icons.circle_outlined, false),
-              _buildNavItem(Icons.calendar_today_outlined, true),
-              _buildNavItem(Icons.account_circle_outlined, false),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isHighlighted) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isHighlighted ? const Color(0xFFD4FF00) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(
-        icon,
-        color: isHighlighted ? Colors.black : Colors.white,
-        size: 24,
-      ),
-    );
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'therapy':
+        return const Color(0xFF7FDBDA);
+      case 'relationship':
+        return const Color(0xFFFF69B4);
+      case 'self-care':
+        return const Color(0xFFB8B5FF);
+      case 'work':
+        return const Color(0xFFFFD700);
+      default:
+        return const Color(0xFF87CEEB);
+    }
   }
 }
