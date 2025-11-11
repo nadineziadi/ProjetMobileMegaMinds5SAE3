@@ -1,4 +1,4 @@
-// MAIN.DART - Version corrigée pour Windows
+// MAIN.DART - Version avec Login comme page principale
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -60,7 +60,6 @@ void main() async {
   );
 }
 
-// Le reste du code reste identique...
 class GyminiApp extends StatelessWidget {
   const GyminiApp({super.key});
 
@@ -87,7 +86,8 @@ class GyminiApp extends StatelessWidget {
         ),
       ),
       
-      home: const AppInitializer(),
+      // ✅ CHANGEMENT ICI : Login comme page principale
+      home: const LoginScreen(),
       
       routes: {
         '/login': (context) => const LoginScreen(),
@@ -109,50 +109,10 @@ class GyminiApp extends StatelessWidget {
       
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
-          builder: (context) => const SplashScreen(),
+          builder: (context) => const LoginScreen(), // ✅ Rediriger vers login si route inconnue
         );
       },
     );
-  }
-}
-
-class AppInitializer extends StatefulWidget {
-  const AppInitializer({Key? key}) : super(key: key);
-
-  @override
-  State<AppInitializer> createState() => _AppInitializerState();
-}
-
-class _AppInitializerState extends State<AppInitializer> {
-  final _userService = UserService();
-
-  @override
-  void initState() {
-    super.initState();
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2));
-    
-    final user = await _userService.getCurrentUser();
-    
-    if (mounted) {
-      if (user != null) {
-        if (user.isAdmin) {
-          Navigator.pushReplacementNamed(context, '/adminDashboard');
-        } else {
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        }
-      } else {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const SplashScreen();
   }
 }
 
