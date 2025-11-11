@@ -2,18 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 
+// 🧩 Add these imports for database initialization
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 // Import your real module pages here
 import 'pages/user/dashboard_page.dart';
-import 'pages/workout/workouts_page.dart';
+import 'pages/workout/screens/workouts_page.dart';
 import 'pages/nutrition/nutrition_page.dart';
 import 'pages/program/programs_page.dart';
 import 'pages/mental health/mental_health_page.dart';
 import 'pages/supplements/supplements_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 🧠 Initialize sqflite for desktop (Windows/Linux)
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(
     DevicePreview(
-      enabled: true, // or !kReleaseMode if you import foundation
+      enabled: true, // or !kReleaseMode if you want to disable it in production
       builder: (context) => const FitLifeApp(),
     ),
   );
@@ -66,7 +80,7 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // This allows the body to extend behind the navbar
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -81,7 +95,7 @@ class _HomeTabsState extends State<HomeTabs> {
         child: _pages[_currentIndex],
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16), // Add margin for floating effect
+        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF1E2124),
           boxShadow: [
@@ -91,7 +105,7 @@ class _HomeTabsState extends State<HomeTabs> {
               offset: const Offset(0, -5),
             ),
           ],
-          borderRadius: BorderRadius.circular(24), // Full circular border
+          borderRadius: BorderRadius.circular(24),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -108,14 +122,14 @@ class _HomeTabsState extends State<HomeTabs> {
             items: _icons.map((icon) {
               int index = _icons.indexOf(icon);
               bool isSelected = _currentIndex == index;
-              
+
               return BottomNavigationBarItem(
                 icon: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected 
+                    color: isSelected
                         ? const Color(0xFFC7F000).withOpacity(0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
