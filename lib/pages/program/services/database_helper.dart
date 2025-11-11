@@ -4,6 +4,7 @@ import '../models/exercise.dart';
 import '../models/workout.dart';
 import '../models/program.dart';
 import '../models/user_progress.dart';
+import '../models/exercise_library.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -22,12 +23,14 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // ⚠️ CHANGED: Increment version to 2
       onCreate: _createDB,
+      onUpgrade: _onUpgrade, // Add upgrade handler
     );
   }
 
   Future _createDB(Database db, int version) async {
+    // Original tables
     await db.execute('''
       CREATE TABLE programs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +79,53 @@ class DatabaseHelper {
         FOREIGN KEY (workout_id) REFERENCES workouts (id)
       )
     ''');
+    
+    // ✅ NEW: Create exercise library table
+    await db.execute('''
+      CREATE TABLE exercise_library(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT NOT NULL,
+        difficulty TEXT NOT NULL,
+        muscleGroups TEXT NOT NULL,
+        equipment TEXT NOT NULL,
+        videoUrl TEXT,
+        thumbnailUrl TEXT,
+        instructions TEXT NOT NULL,
+        tips TEXT,
+        commonMistakes TEXT,
+        isFavorite INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+    
     await _insertSampleData(db);
+  }
+
+  // ✅ NEW: Handle database upgrades
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add exercise_library table for existing users
+      await db.execute('''
+        CREATE TABLE exercise_library(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category TEXT NOT NULL,
+          difficulty TEXT NOT NULL,
+          muscleGroups TEXT NOT NULL,
+          equipment TEXT NOT NULL,
+          videoUrl TEXT,
+          thumbnailUrl TEXT,
+          instructions TEXT NOT NULL,
+          tips TEXT,
+          commonMistakes TEXT,
+          isFavorite INTEGER DEFAULT 0,
+          createdAt TEXT NOT NULL
+        )
+      ''');
+    }
   }
 
   Future<void> _insertSampleData(Database db) async {
@@ -178,6 +227,10 @@ class DatabaseHelper {
     }
   }
 
+  // ============================================
+  // PROGRAM METHODS (existing - no changes)
+  // ============================================
+  
   Future<List<Program>> getAllPrograms() async {
     final db = await database;
     final programMaps = await db.query('programs');
@@ -363,15 +416,21 @@ class DatabaseHelper {
     return exerciseMaps.map((map) => Exercise.fromMap(map)).toList();
   }
 
+  // ============================================
+  // WORKOUT LOG METHODS (existing - no changes)
+  // ============================================
+
   Future<int> insertWorkoutLog(WorkoutLog log) async {
     final db = await database;
     return await db.insert('workout_logs', log.toMap());
   }
+
   Future<List<WorkoutLog>> getWorkoutLogs() async {
     final db = await database;
     final maps = await db.query('workout_logs', orderBy: 'date DESC');
     return maps.map((map) => WorkoutLog.fromMap(map)).toList();
   }
+
   Future<List<WorkoutLog>> getWorkoutLogsByWorkoutId(int workoutId) async {
     final db = await database;
     final maps = await db.query(
@@ -382,6 +441,7 @@ class DatabaseHelper {
     );
     return maps.map((map) => WorkoutLog.fromMap(map)).toList();
   }
+
   Future<List<WorkoutLog>> getRecentWorkoutLogs({int limit = 10}) async {
     final db = await database;
     final maps = await db.query(
@@ -391,6 +451,7 @@ class DatabaseHelper {
     );
     return maps.map((map) => WorkoutLog.fromMap(map)).toList();
   }
+
   Future<List<WorkoutLog>> getWorkoutLogsByDateRange(
     DateTime startDate,
     DateTime endDate,
@@ -485,5 +546,97 @@ class DatabaseHelper {
     await db.delete('exercises');
     await db.delete('workouts');
     await db.delete('programs');
+    await db.delete('exercise_library'); // ✅ NEW
+  }
+
+  // ============================================
+  // ✅ NEW: EXERCISE LIBRARY METHODS
+  // ============================================
+
+  Future<int> insertExercise(ExerciseLibrary exercise) async {
+    final db = await database;
+    return await db.insert('exercise_library', exercise.toMap());
+  }
+
+  Future<List<ExerciseLibrary>> getAllExercises() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'exercise_library',
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => ExerciseLibrary.fromMap(maps[i]));
+  }
+
+  Future<ExerciseLibrary?> getExerciseById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'exercise_library',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return ExerciseLibrary.fromMap(maps.first);
+  }
+
+  Future<int> toggleExerciseFavorite(int id, bool isFavorite) async {
+    final db = await database;
+    return await db.update(
+      'exercise_library',
+      {'isFavorite': isFavorite ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> updateExercise(ExerciseLibrary exercise) async {
+    final db = await database;
+    return await db.update(
+      'exercise_library',
+      exercise.toMap(),
+      where: 'id = ?',
+      whereArgs: [exercise.id],
+    );
+  }
+
+  Future<int> deleteExercise(int id) async {
+    final db = await database;
+    return await db.delete(
+      'exercise_library',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<ExerciseLibrary>> searchExercises(String query) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'exercise_library',
+      where: 'name LIKE ? OR description LIKE ? OR muscleGroups LIKE ?',
+      whereArgs: ['%$query%', '%$query%', '%$query%'],
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => ExerciseLibrary.fromMap(maps[i]));
+  }
+
+  Future<List<ExerciseLibrary>> getExercisesByCategory(String category) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'exercise_library',
+      where: 'category = ?',
+      whereArgs: [category],
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => ExerciseLibrary.fromMap(maps[i]));
+  }
+
+  Future<List<ExerciseLibrary>> getFavoriteExercises() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'exercise_library',
+      where: 'isFavorite = 1',
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => ExerciseLibrary.fromMap(maps[i]));
   }
 }

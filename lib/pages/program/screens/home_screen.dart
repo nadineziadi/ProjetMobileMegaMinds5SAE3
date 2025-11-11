@@ -4,6 +4,7 @@ import '../providers/program_provider.dart';
 import 'programs_list_screen.dart';
 import 'statistics_screen.dart';
 import 'calendar_settings_screen.dart';
+import 'exercise_library_screen.dart'; // Add this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const cardColor = Color(0xFF23252B);
     const accentBlue = Color(0xFF4886FE);
     const accentGreen = Color(0xFF6DFD7D);
+    const accentPurple = Color(0xFF9D4EDD); // New color for Exercise Library
     const headerGradientStart = Color(0xFF22264B);
     const headerGradientEnd = Color(0xFF20894D);
 
@@ -54,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30), // less bottom padding here
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           children: [
             // Header Card
             Container(
@@ -130,6 +132,31 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               icon: const Icon(Icons.format_list_bulleted, size: 26),
               label: const Text('Browse Programs'),
+            ),
+            const SizedBox(height: 18),
+
+            // NEW: Exercise Library Button
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ExerciseLibraryScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentPurple,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              icon: const Icon(Icons.library_books, size: 26),
+              label: const Text('Exercise Library'),
             ),
             const SizedBox(height: 18),
 
@@ -218,10 +245,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.amber,
                     label: 'Track your full fitness journey and streaks.',
                   ),
+                  const SizedBox(height: 16),
+                  _featureRow(
+                    context,
+                    icon: Icons.library_books,
+                    color: accentPurple,
+                    label: 'Explore 100+ exercises with detailed instructions.',
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12), // less final space
+            const SizedBox(height: 12),
           ],
         ),
       ),

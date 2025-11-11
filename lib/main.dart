@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
 import 'pages/program/services/notification_service.dart';
 
 // Import your real module pages here
@@ -15,15 +16,35 @@ import 'pages/supplements/supplements_page.dart';
 // Import your providers
 import 'pages/program/providers/program_provider.dart';
 import 'pages/program/providers/statistics_provider.dart';
+import 'pages/program/providers/exercise_library_provider.dart';
+import 'pages/program/services/database_helper.dart'; // Add this
+import 'pages/program/services/exercise_library_service.dart';
 
 void main() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize notifications
   await NotificationService.initialize();
+
+  // ✅ FIXED: Check and seed exercises BEFORE creating app
+  final db = await DatabaseHelper.instance.database;
+  final exerciseCount = await db.rawQuery('SELECT COUNT(*) as count FROM exercise_library');
+  final count = Sqflite.firstIntValue(exerciseCount) ?? 0;
+  
+  if (count == 0) {
+    debugPrint('🌱 Seeding exercise library with default exercises...');
+    final seedExercises = ExerciseLibraryService.getSeedExercises();
+    for (var exercise in seedExercises) {
+      await DatabaseHelper.instance.insertExercise(exercise);
+    }
+    debugPrint('✅ Seeded ${seedExercises.length} exercises!');
+  } else {
+    debugPrint('✅ Exercise library already has $count exercises');
+  }
+
   runApp(
     DevicePreview(
-      enabled: true, // or !kReleaseMode if you import foundation
+      enabled: true,
       builder: (context) => const FitLifeApp(),
     ),
   );
@@ -38,6 +59,7 @@ class FitLifeApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ProgramProvider()),
         ChangeNotifierProvider(create: (_) => StatisticsProvider()),
+        ChangeNotifierProvider(create: (_) => ExerciseLibraryProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -80,7 +102,7 @@ class _HomeTabsState extends State<HomeTabs> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // This allows the body to extend behind the navbar
+      extendBody: true,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -92,7 +114,7 @@ class _HomeTabsState extends State<HomeTabs> {
         child: _pages[_currentIndex],
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16), // Add margin for floating effect
+        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF1E2124),
           boxShadow: [
@@ -102,7 +124,7 @@ class _HomeTabsState extends State<HomeTabs> {
               offset: const Offset(0, -5),
             ),
           ],
-          borderRadius: BorderRadius.circular(24), // Full circular border
+          borderRadius: BorderRadius.circular(24),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
