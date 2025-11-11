@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/mental_health_models.dart';
 import '../../services/mental_health_service.dart';
 
@@ -26,6 +27,86 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
 
   late AnimationController _breathingController;
   late Animation<double> _breathingAnimation;
+
+  // 🎵 PLAYLISTS RÉELLES POUR CHAQUE CATÉGORIE
+  final Map<String, List<Map<String, String>>> _musicPlaylists = {
+    'relaxation': [
+      {
+        'title': 'Peaceful Piano',
+        'artist': 'Spotify',
+        'url': 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO',
+        'platform': 'Spotify'
+      },
+      {
+        'title': 'Deep Sleep',
+        'artist': 'YouTube',
+        'url': 'https://www.youtube.com/watch?v=1ZYbU82GVz4',
+        'platform': 'YouTube'
+      },
+      {
+        'title': 'Calm Meditation',
+        'artist': 'Apple Music',
+        'url': 'https://music.apple.com/us/playlist/peaceful-meditation/pl.7cbbdba6d6b14c9f',
+        'platform': 'Apple Music'
+      },
+    ],
+    'stress': [
+      {
+        'title': 'Stress Relief',
+        'artist': 'Spotify',
+        'url': 'https://open.spotify.com/playlist/37i9dQZF1DX3Ogo9pFvBkY',
+        'platform': 'Spotify'
+      },
+      {
+        'title': 'Anxiety Relief Music',
+        'artist': 'YouTube',
+        'url': 'https://www.youtube.com/watch?v=Z2iZfGzLmuk',
+        'platform': 'YouTube'
+      },
+    ],
+    'focus': [
+      {
+        'title': 'Deep Focus',
+        'artist': 'Spotify',
+        'url': 'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ',
+        'platform': 'Spotify'
+      },
+      {
+        'title': 'Concentration Music',
+        'artist': 'YouTube',
+        'url': 'https://www.youtube.com/watch?v=4ozyV3m4wtY',
+        'platform': 'YouTube'
+      },
+    ],
+    'sleep': [
+      {
+        'title': 'Sleep Meditation',
+        'artist': 'Calm',
+        'url': 'https://www.youtube.com/watch?v=WNpbS-iyE-8',
+        'platform': 'YouTube'
+      },
+      {
+        'title': 'Deep Sleep Sounds',
+        'artist': 'Spotify',
+        'url': 'https://open.spotify.com/playlist/37i9dQZF1DWZd79rJ6a7lp',
+        'platform': 'Spotify'
+      },
+    ],
+    'energy': [
+      {
+        'title': 'Morning Motivation',
+        'artist': 'Spotify',
+        'url': 'https://open.spotify.com/playlist/37i9dQZF1DXc5e2bJhV6pu',
+        'platform': 'Spotify'
+      },
+      {
+        'title': 'Positive Vibes',
+        'artist': 'YouTube',
+        'url': 'https://www.youtube.com/watch?v=3AtDnEC4zak',
+        'platform': 'YouTube'
+      },
+    ]
+  };
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.air, 'label': 'All', 'value': null},
@@ -57,20 +138,15 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
     setState(() => _isLoading = true);
     
     try {
-      // Charger tous les exercices
       final exercises = await _service.getRelaxationExercises();
-      
-      // Charger la dernière humeur pour recommandation
       final moodHistory = await _service.getMoodHistory(days: 1);
       final lastMood = moodHistory.isNotEmpty ? moodHistory.first : null;
       
-      // Obtenir une recommandation
       RelaxationExercise? recommended;
       if (lastMood != null) {
         recommended = await _service.recommendExercise(lastMood.mood);
       }
       
-      // Calculer statistiques
       final completedExercises = exercises.where((e) => e.isCompleted).toList();
       final today = DateTime.now();
       final completedToday = completedExercises.where((e) {
@@ -93,6 +169,50 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
     } catch (e) {
       print('Error loading relaxation data: $e');
       setState(() => _isLoading = false);
+    }
+  }
+
+  // 🎵 FONCTION POUR LANCER LA MUSIQUE SUR LA PLATEFORME
+  Future<void> _launchMusic(String url) async {
+    try {
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching music: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot open music link: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // 🎵 RECOMMANDATIONS DE MUSIQUE INTELLIGENTES BASÉES SUR L'HUMEUR
+  List<Map<String, String>> _getRecommendedMusic(String mood) {
+    switch (mood.toLowerCase()) {
+      case 'stressed':
+      case 'anxious':
+        return _musicPlaylists['stress'] ?? [];
+      case 'tired':
+      case 'sleepy':
+        return _musicPlaylists['sleep'] ?? [];
+      case 'sad':
+      case 'depressed':
+        return _musicPlaylists['relaxation'] ?? [];
+      case 'focused':
+      case 'productive':
+        return _musicPlaylists['focus'] ?? [];
+      case 'energetic':
+      case 'happy':
+        return _musicPlaylists['energy'] ?? [];
+      default:
+        return _musicPlaylists['relaxation'] ?? [];
     }
   }
 
@@ -131,7 +251,6 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
           ),
         ),
         actions: [
-          // Badge de progression
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -175,14 +294,15 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stats Card
                     _buildStatsCard(),
                     
-                    // Recommendation Card (si disponible)
                     if (_recommendedExercise != null && _lastMood != null)
                       _buildRecommendationCard(),
                     
-                    // Category Tabs
+                    // 🎵 SECTION MUSIQUE RECOMMANDÉE (NOUVELLE)
+                    if (_lastMood != null && _selectedCategory != 3)
+                      _buildMusicRecommendationSection(),
+                    
                     SizedBox(
                       height: 100,
                       child: ListView.builder(
@@ -245,7 +365,6 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                       ),
                     ),
 
-                    // Exercises List
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
@@ -278,6 +397,8 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
             ),
     );
   }
+
+  // ========== FONCTIONS MANQUANTES ==========
 
   Widget _buildStatsCard() {
     return Container(
@@ -508,6 +629,85 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
     );
   }
 
+  // 🎵 NOUVELLE SECTION PUREMENT MUSICALE
+  Widget _buildMusicRecommendationSection() {
+    final recommendedMusic = _getRecommendedMusic(_lastMood!.mood);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFFFB6C1).withOpacity(0.3),
+            Color(0xFFFFB6C1).withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Color(0xFFFFB6C1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.music_note, color: Color(0xFFFFB6C1), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Music for ${_lastMood!.mood} mood',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...recommendedMusic.take(2).map((music) => _buildMusicTile(music)),
+        ],
+      ),
+    );
+  }
+
+  // 🎵 TILE DE MUSIQUE CLICKABLE
+  Widget _buildMusicTile(Map<String, String> music) {
+    return ListTile(
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Color(0xFFFFB6C1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(Icons.play_arrow, color: Colors.white),
+      ),
+      title: Text(
+        music['title']!,
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        '${music['artist']!} • ${music['platform']!}',
+        style: TextStyle(color: Colors.white70),
+      ),
+      trailing: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _getPlatformColor(music['platform']!),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Text(
+          music['platform']!,
+          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      ),
+      onTap: () => _launchMusic(music['url']!),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Container(
       margin: const EdgeInsets.all(32),
@@ -644,7 +844,28 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
     );
   }
 
+  // ========== FONCTIONS SUPPLEMENTAIRES ==========
+
+  Color _getPlatformColor(String platform) {
+    switch (platform.toLowerCase()) {
+      case 'spotify':
+        return Color(0xFF1DB954);
+      case 'youtube':
+        return Color(0xFFFF0000);
+      case 'apple music':
+        return Color(0xFFFA243C);
+      default:
+        return Color(0xFFFFB6C1);
+    }
+  }
+
   void _showExercisePlayer(RelaxationExercise exercise) {
+    // 🎵 SI C'EST UN EXERCICE DE MUSIQUE, OUVRE DIRECTEMENT LES PLAYLISTS
+    if (exercise.category == 'music') {
+      _showMusicSelection(exercise);
+      return;
+    }
+
     final color = _getCategoryColor(exercise.category);
     int currentSeconds = 0;
     bool isPlaying = false;
@@ -702,7 +923,6 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Handle
                     Container(
                       width: 40,
                       height: 4,
@@ -711,10 +931,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Close Button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -745,10 +962,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 16),
-
-                    // Title
                     Text(
                       exercise.title,
                       style: const TextStyle(
@@ -758,9 +972,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                       ),
                       textAlign: TextAlign.center,
                     ),
-
                     const SizedBox(height: 8),
-
                     Text(
                       exercise.subtitle,
                       style: const TextStyle(
@@ -769,10 +981,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                       ),
                       textAlign: TextAlign.center,
                     ),
-
                     const Spacer(),
-
-                    // Animated Circle with breathing effect
                     ScaleTransition(
                       scale: isPlaying
                           ? _breathingAnimation
@@ -807,10 +1016,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         ),
                       ),
                     ),
-
                     const Spacer(),
-
-                    // Progress Bar
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
@@ -846,10 +1052,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Timer
                     Text(
                       _formatTime(currentSeconds),
                       style: const TextStyle(
@@ -859,10 +1062,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         letterSpacing: 2,
                       ),
                     ),
-
                     const SizedBox(height: 32),
-
-                    // Controls
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -920,7 +1120,6 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -929,9 +1128,116 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
           );
         },
       ),
-    ).then((_) {
-      // Cleanup
-    });
+    );
+  }
+
+  // 🎵 NOUVELLE FONCTION POUR LA SÉLECTION DE MUSIQUE
+  void _showMusicSelection(RelaxationExercise exercise) {
+    final recommendedMusic = _lastMood != null 
+        ? _getRecommendedMusic(_lastMood!.mood)
+        : _musicPlaylists['relaxation'] ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFB6C1).withOpacity(0.9),
+              const Color(0xFF1E1E1E),
+            ],
+          ),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(30),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white54,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Text(
+                    'Choose Your Music',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 48),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Recommended for your ${_lastMood?.mood ?? 'current'} mood',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: recommendedMusic.length,
+                  itemBuilder: (context, index) {
+                    final music = recommendedMusic[index];
+                    return Card(
+                      color: Colors.white.withOpacity(0.1),
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: _getPlatformColor(music['platform']!),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.music_note, color: Colors.white),
+                        ),
+                        title: Text(
+                          music['title']!,
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${music['artist']!} • ${music['platform']!}',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        trailing: Icon(Icons.play_arrow, color: Colors.white),
+                        onTap: () {
+                          _launchMusic(music['url']!);
+                          _completeExercise(exercise);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _completeExercise(RelaxationExercise exercise) async {
@@ -957,7 +1263,7 @@ class _RelaxationScreenState extends State<RelaxationScreen> with TickerProvider
         ),
       );
       
-      _loadData(); // Refresh data
+      _loadData();
     }
   }
 
