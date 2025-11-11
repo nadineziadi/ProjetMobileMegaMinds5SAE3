@@ -40,7 +40,7 @@ class WorkoutDatabase {
 
   Future<int> create(Workout workout) async {
     final db = await instance.database;
-    return await db.insert('workouts', workout.toMap());
+    return await db.insert('workouts', _sanitizeWorkout(workout));
   }
 
   Future<List<Workout>> readAll() async {
@@ -50,10 +50,13 @@ class WorkoutDatabase {
   }
 
   Future<int> update(Workout workout) async {
+    if (workout.id == null) {
+      throw Exception('Cannot update workout without an ID');
+    }
     final db = await instance.database;
     return await db.update(
       'workouts',
-      workout.toMap(),
+      _sanitizeWorkout(workout),
       where: 'id = ?',
       whereArgs: [workout.id],
     );
@@ -67,5 +70,18 @@ class WorkoutDatabase {
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  // Convert nulls to safe defaults
+  Map<String, dynamic> _sanitizeWorkout(Workout workout) {
+    return {
+      'id': workout.id,
+      'name': workout.name ?? '',
+      'type': workout.type ?? '',
+      'duration': workout.duration ?? 0,
+      'caloriesBurned': workout.caloriesBurned ?? 0,
+      'date': workout.date?.toIso8601String() ?? DateTime.now().toIso8601String(),
+      'notes': workout.notes ?? '',
+    };
   }
 }

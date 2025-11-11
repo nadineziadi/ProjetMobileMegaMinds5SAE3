@@ -8,7 +8,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // Import your real module pages here
 import 'pages/user/dashboard_page.dart';
-import 'pages/workout/workouts_page.dart';
+import 'pages/workout/screens/workouts_page.dart';
 import 'pages/nutrition/nutrition_page.dart';
 import 'pages/program/programs_page.dart';
 import 'pages/mental health/mental_health_page.dart';

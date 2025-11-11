@@ -6,6 +6,8 @@ class Workout {
   final DateTime date;
   final int? caloriesBurned;
   final String? notes;
+  final String? youtubeVideoId;
+  
 
   Workout({
     this.id,
@@ -15,6 +17,7 @@ class Workout {
     required this.date,
     this.caloriesBurned,
     this.notes,
+    this.youtubeVideoId,
   });
 
   Map<String, dynamic> toMap() {

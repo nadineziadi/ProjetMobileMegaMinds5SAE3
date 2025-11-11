@@ -1,8 +1,8 @@
 // lib/pages/workout/workout_form_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'models/workout_model.dart';
-import 'services/workout_database.dart';
+import '../models/workout_model.dart';
+import '../services/workout_database.dart';
 
 class WorkoutFormScreen extends StatefulWidget {
   final Workout? existingWorkout;
