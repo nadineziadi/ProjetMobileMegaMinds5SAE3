@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 
-// 🧩 Add these imports for database initialization
+// 🧩 Database packages
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-// Import your real module pages here
+// 🧠 Notifications & database helpers
+import 'pages/program/services/notification_service.dart';
+import 'pages/program/services/database_helper.dart';
+import 'pages/program/services/exercise_library_service.dart';
+
+// 🥗 Nutrition services
+import 'pages/nutrition/meal_service.dart';
+import 'pages/nutrition/water_service.dart';
+
+// 🧩 Providers
+import 'pages/program/providers/program_provider.dart';
+import 'pages/program/providers/statistics_provider.dart';
+import 'pages/program/providers/exercise_library_provider.dart';
+
+// 📄 Pages
 import 'pages/user/dashboard_page.dart';
 import 'pages/workout/screens/workouts_page.dart';
-import 'pages/nutrition/nutrition_page.dart';
+import 'pages/nutrition/nutrition_page.dart'; // NutritionPageState
+import 'pages/nutrition/healthy_meals_page.dart';
+import 'pages/nutrition/nutrition_stats_page.dart';
 import 'pages/program/programs_page.dart';
 import 'pages/mental health/mental_health_page.dart';
 import 'pages/supplements/supplements_page.dart';
@@ -25,9 +42,33 @@ Future<void> main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
+  // 🔔 Initialize notifications
+  await NotificationService.initialize();
+
+  // ✅ Initialize nutrition databases
+  await MealService.initDatabase();
+  await WaterService.initDatabase();
+
+  // ✅ Seed exercise library if empty
+  final db = await DatabaseHelper.instance.database;
+  final exerciseCount =
+      await db.rawQuery('SELECT COUNT(*) as count FROM exercise_library');
+  final count = Sqflite.firstIntValue(exerciseCount) ?? 0;
+
+  if (count == 0) {
+    debugPrint('🌱 Seeding exercise library with default exercises...');
+    final seedExercises = ExerciseLibraryService.getSeedExercises();
+    for (var exercise in seedExercises) {
+      await DatabaseHelper.instance.insertExercise(exercise);
+    }
+    debugPrint('✅ Seeded ${seedExercises.length} exercises!');
+  } else {
+    debugPrint('✅ Exercise library already has $count exercises');
+  }
+
   runApp(
     DevicePreview(
-      enabled: true, // or !kReleaseMode if you want to disable it in production
+      enabled: true, // set to !kReleaseMode if you want to disable in production
       builder: (context) => const FitLifeApp(),
     ),
   );
@@ -38,13 +79,21 @@ class FitLifeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FitLife Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProgramProvider()),
+        ChangeNotifierProvider(create: (_) => StatisticsProvider()),
+        ChangeNotifierProvider(create: (_) => ExerciseLibraryProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'FitLife Tracker',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          useMaterial3: true,
+        ),
+        home: const HomeTabs(),
       ),
-      home: const HomeTabs(),
     );
   }
 }
@@ -59,14 +108,10 @@ class HomeTabs extends StatefulWidget {
 class _HomeTabsState extends State<HomeTabs> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const WorkoutsPage(),
-    const NutritionPage(),
-    const ProgramsPage(),
-    const MentalHealthPage(),
-    const SupplementsPage(),
-  ];
+  // For NutritionPage refresh & actions
+  final GlobalKey<NutritionPageState> _nutritionKey = GlobalKey<NutritionPageState>();
+
+  late List<Widget> _pages;
 
   final List<IconData> _icons = [
     Icons.dashboard_rounded,
@@ -77,17 +122,71 @@ class _HomeTabsState extends State<HomeTabs> {
     Icons.local_hospital_rounded,
   ];
 
+  final List<String> _titles = [
+    'Dashboard',
+    'Entraînements',
+    'Nutrition',
+    'Programmes',
+    'Santé Mentale',
+    'Suppléments',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const DashboardPage(),
+      const WorkoutsPage(),
+      NutritionPage(key: _nutritionKey),
+      const ProgramsPage(),
+      const MentalHealthPage(),
+      const SupplementsPage(),
+    ];
+  }
+
+  void _refreshNutrition() {
+    _nutritionKey.currentState?.loadMeals();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF32383E),
+        title: Text(
+          _titles[_currentIndex],
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: false,
+        actions: _currentIndex == 2
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.restaurant_menu, color: Color(0xFFC7F000)),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HealthyMealsPage()),
+                  ).then((_) => _refreshNutrition()),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.bar_chart, color: Color(0xFFC7F000)),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NutritionStatsPage()),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle, color: Color(0xFFC7F000)),
+                  onPressed: () => _nutritionKey.currentState?.showAddOptions(),
+                ),
+                const SizedBox(width: 8),
+              ]
+            : null,
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF32383E),
-              Color(0xFF17191C),
-            ],
+            colors: [Color(0xFF32383E), Color(0xFF17191C)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -100,10 +199,9 @@ class _HomeTabsState extends State<HomeTabs> {
           color: const Color(0xFF1E2124),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, -5))
           ],
           borderRadius: BorderRadius.circular(24),
         ),
@@ -111,7 +209,7 @@ class _HomeTabsState extends State<HomeTabs> {
           borderRadius: BorderRadius.circular(24),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
+            onTap: (i) => setState(() => _currentIndex = i),
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -120,24 +218,19 @@ class _HomeTabsState extends State<HomeTabs> {
             showSelectedLabels: false,
             showUnselectedLabels: false,
             items: _icons.map((icon) {
-              int index = _icons.indexOf(icon);
-              bool isSelected = _currentIndex == index;
-
+              int i = _icons.indexOf(icon);
+              bool selected = _currentIndex == i;
               return BottomNavigationBarItem(
                 icon: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected
+                    color: selected
                         ? const Color(0xFFC7F000).withOpacity(0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    size: isSelected ? 28 : 24,
-                  ),
+                  child: Icon(icon, size: selected ? 28 : 24),
                 ),
                 label: '',
               );
