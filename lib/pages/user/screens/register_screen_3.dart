@@ -34,7 +34,7 @@
 
         Navigator.pushNamedAndRemoveUntil(
     context,
-    '/dashboard',
+    '/oldDashboard',
     (route) => false,
     );
         } catch (e) {

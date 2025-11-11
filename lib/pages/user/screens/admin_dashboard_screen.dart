@@ -47,18 +47,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         elevation: 0,
         title: Row(
           children: [
-            Icon(Icons.admin_panel_settings, color: Colors.amber),
-            SizedBox(width: 8),
+            const Icon(Icons.admin_panel_settings, color: Colors.amber),
+            const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Admin Dashboard',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   _currentAdmin?.name ?? 'Admin',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -66,11 +66,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _loadData,
           ),
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () async {
               await _userService.logout();
               Navigator.pushReplacementNamed(context, '/login');
@@ -110,7 +110,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               const SizedBox(height: 24),
               
               // Users List
-              Text(
+              const Text(
                 'Utilisateurs',
                 style: TextStyle(
                   color: Colors.white,
@@ -118,12 +118,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               ...regularUsers.map((user) => _buildUserCard(user)).toList(),
               
               if (regularUsers.isEmpty)
-                Center(
+                const Center(
                   child: Padding(
                     padding: EdgeInsets.all(40),
                     child: Text(
@@ -176,32 +176,32 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildUserCard(UserProfile user) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF2d2d2d),
+        color: const Color(0xFF2d2d2d),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Color(0xFFa3e635).withOpacity(0.2),
+            backgroundColor: const Color(0xFFa3e635).withOpacity(0.2),
             child: Text(
               user.name[0].toUpperCase(),
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFFa3e635),
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   user.name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -209,28 +209,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 Text(
                   user.email,
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     _buildBadge('${user.age} ans', Colors.blue),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     _buildBadge('${user.weight.toStringAsFixed(1)} kg', Colors.green),
-                    SizedBox(width: 8),
-                    _buildBadge(user.goal, Colors.orange),
+                    const SizedBox(width: 8),
+                    _buildBadge(_getGoalText(user.goal), Colors.orange),
                   ],
                 ),
               ],
             ),
           ),
           PopupMenuButton(
-            icon: Icon(Icons.more_vert, color: Colors.grey),
-            color: Color(0xFF1a1a1a),
+            icon: const Icon(Icons.more_vert, color: Colors.grey),
+            color: const Color(0xFF1a1a1a),
             itemBuilder: (context) => [
               PopupMenuItem(
                 child: Row(
-                  children: [
+                  children: const [
                     Icon(Icons.delete, color: Colors.red, size: 20),
                     SizedBox(width: 8),
                     Text('Supprimer', style: TextStyle(color: Colors.red)),
@@ -240,7 +240,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               PopupMenuItem(
                 child: Row(
-                  children: [
+                  children: const [
                     Icon(Icons.upgrade, color: Colors.amber, size: 20),
                     SizedBox(width: 8),
                     Text('Promouvoir Admin', style: TextStyle(color: Colors.amber)),
@@ -257,7 +257,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildBadge(String text, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
@@ -273,16 +273,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF2d2d2d),
-        title: Text('Supprimer l\'utilisateur', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF2d2d2d),
+        title: const Text('Supprimer l\'utilisateur', style: TextStyle(color: Colors.white)),
         content: Text(
           'Êtes-vous sûr de vouloir supprimer ${user.name}?',
-          style: TextStyle(color: Colors.grey),
+          style: const TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler', style: TextStyle(color: Colors.grey)),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -290,14 +290,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Navigator.pop(context);
               _loadData();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+                const SnackBar(
                   content: Text('Utilisateur supprimé'),
                   backgroundColor: Colors.red,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('Supprimer'),
+            child: const Text('Supprimer'),
           ),
         ],
       ),
@@ -308,9 +308,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF2d2d2d),
+        backgroundColor: const Color(0xFF2d2d2d),
         title: Row(
-          children: [
+          children: const [
             Icon(Icons.admin_panel_settings, color: Colors.amber),
             SizedBox(width: 8),
             Text('Promouvoir Admin', style: TextStyle(color: Colors.white)),
@@ -318,12 +318,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         content: Text(
           'Voulez-vous promouvoir ${user.name} en tant qu\'administrateur?',
-          style: TextStyle(color: Colors.grey),
+          style: const TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler', style: TextStyle(color: Colors.grey)),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -338,10 +338,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-            child: Text('Promouvoir', style: TextStyle(color: Colors.black)),
+            child: const Text('Promouvoir', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
     );
+  }
+
+  String _getGoalText(String goal) {
+    switch (goal) {
+      case 'weight_loss': return 'Perte poids';
+      case 'muscle_gain': return 'Musculation';
+      case 'endurance': return 'Endurance';
+      default: return 'Bien-être';
+    }
   }
 }

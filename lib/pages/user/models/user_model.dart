@@ -24,6 +24,45 @@ class UserProfile {
   List<WeightEntry> weightHistory;
   List<String> badges;
 
+   // 🔹 AJOUTEZ CETTE MÉTHODE
+  UserProfile copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? password,
+    UserRole? role,
+    int? age,
+    double? weight,
+    double? height,
+    String? gender,
+    String? fitnessLevel,
+    String? goal,
+    String? avatarUrl,
+    DateTime? createdAt,
+    DateTime? lastUpdated,
+    List<WeightEntry>? weightHistory,
+    List<String>? badges,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      role: role ?? this.role,
+      age: age ?? this.age,
+      weight: weight ?? this.weight,
+      height: height ?? this.height,
+      gender: gender ?? this.gender,
+      fitnessLevel: fitnessLevel ?? this.fitnessLevel,
+      goal: goal ?? this.goal,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      weightHistory: weightHistory ?? this.weightHistory,
+      badges: badges ?? this.badges,
+    );
+  }
+
   UserProfile({
     required this.id,
     required this.name,

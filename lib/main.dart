@@ -1,8 +1,16 @@
+// MAIN.DART - Version corrigée pour Windows
+// ============================================
+
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-// Import screens from user/screens folder
+// Import des services
+import 'pages/user/services/user_service.dart';
+
+// Import screens
 import 'pages/user/screens/splash_screen.dart';
 import 'pages/user/screens/login_screen.dart';
 import 'pages/user/screens/register_screen_1.dart';
@@ -25,14 +33,34 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print('🚀 Starting GYMINI App...');
   
+  // 🔥 CORRECTION : Vérifier si on est sur une plateforme desktop AVANT d'utiliser Platform
+  try {
+    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      print('🖥️ SQLite FFI initialized for Desktop');
+    }
+  } catch (e) {
+    print('⚠️ Platform check failed: $e');
+  }
+  
+  // Initialiser le UserService
+  try {
+    final userService = UserService();
+    await userService.init();
+  } catch (e) {
+    print('❌ Error initializing UserService: $e');
+  }
+  
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode, // Activé en mode debug uniquement
+      enabled: !kReleaseMode,
       builder: (context) => const GyminiApp(),
     ),
   );
 }
 
+// Le reste du code reste identique...
 class GyminiApp extends StatelessWidget {
   const GyminiApp({super.key});
 
@@ -41,7 +69,6 @@ class GyminiApp extends StatelessWidget {
     print('📱 Building GyminiApp...');
     
     return MaterialApp(
-      // Configuration DevicePreview
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
@@ -52,25 +79,18 @@ class GyminiApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: const Color(0xFFa3e635),
-        primarySwatch: Colors.blue,
         scaffoldBackgroundColor: const Color(0xFF1a1a1a),
         fontFamily: 'System',
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFFa3e635),
-          secondary: const Color(0xFFC7F000),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFa3e635),
+          secondary: Color(0xFFC7F000),
         ),
       ),
       
-      initialRoute: '/',
+      home: const AppInitializer(),
+      
       routes: {
-        '/': (context) {
-          print('📍 Navigating to SplashScreen');
-          return const SplashScreen();
-        },
-        '/login': (context) {
-          print('📍 Navigating to LoginScreen');
-          return const LoginScreen();
-        },
+        '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen1(),
         '/register2': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -80,19 +100,14 @@ class GyminiApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return RegisterScreen3(userData: args);
         },
-        '/dashboard': (context) {
-          print('📍 Navigating to HomeTabs');
-          return const HomeTabs();
-        },
+        '/dashboard': (context) => const HomeTabs(),
         '/oldDashboard': (context) => const DashboardScreen(),
         '/adminDashboard': (context) => const AdminDashboardScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/settings': (context) => SettingsScreen(),
       },
       
-      // Handler pour routes inexistantes
       onUnknownRoute: (settings) {
-        print('❌ Unknown route: ${settings.name}');
         return MaterialPageRoute(
           builder: (context) => const SplashScreen(),
         );
@@ -101,7 +116,47 @@ class GyminiApp extends StatelessWidget {
   }
 }
 
-// Main navigation with bottom tabs
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  final _userService = UserService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    await Future.delayed(const Duration(seconds: 2));
+    
+    final user = await _userService.getCurrentUser();
+    
+    if (mounted) {
+      if (user != null) {
+        if (user.isAdmin) {
+          Navigator.pushReplacementNamed(context, '/adminDashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SplashScreen();
+  }
+}
+
+// HomeTabs reste identique...
 class HomeTabs extends StatefulWidget {
   const HomeTabs({super.key});
 

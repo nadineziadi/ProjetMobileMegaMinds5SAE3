@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
+import '../services/avatar_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -27,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUser() async {
     await _userService.init();
-    final user = await _userService.getCurrentUser(); // Ajout de await
+    final user = await _userService.getCurrentUser();
     setState(() {
       _currentUser = user;
       if (_currentUser != null) {
@@ -41,12 +43,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (_currentUser != null) {
-      _currentUser!.name = _nameController.text;
-      _currentUser!.age = int.parse(_ageController.text);
-      _currentUser!.weight = double.parse(_weightController.text);
-      _currentUser!.height = double.parse(_heightController.text);
+      final updatedUser = UserProfile(
+        id: _currentUser!.id,
+        name: _nameController.text,
+        email: _currentUser!.email,
+        password: _currentUser!.password,
+        role: _currentUser!.role,
+        age: int.parse(_ageController.text),
+        weight: double.parse(_weightController.text),
+        height: double.parse(_heightController.text),
+        gender: _currentUser!.gender,
+        fitnessLevel: _currentUser!.fitnessLevel,
+        goal: _currentUser!.goal,
+        avatarUrl: _currentUser!.avatarUrl,
+        createdAt: _currentUser!.createdAt,
+        lastUpdated: DateTime.now(),
+        weightHistory: _currentUser!.weightHistory,
+        badges: _currentUser!.badges,
+      );
+
+      await _userService.updateUser(updatedUser);
+      await _loadUser();
       
-      await _userService.updateUser(_currentUser!);
       setState(() {
         _isEditing = false;
       });
@@ -58,6 +76,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     }
+  }
+
+  void _regenerateAvatar() {
+    if (_currentUser != null) {
+      print('🔄 Régénération de l\'avatar...');
+      AvatarService.debugAvatarGeneration(_currentUser!);
+      
+      final newAvatarUrl = AvatarService.generateUserAvatar(_currentUser!);
+      _updateUserAvatar(newAvatarUrl);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Avatar régénéré avec les caractéristiques correctes'),
+          backgroundColor: Color(0xFFa3e635),
+        ),
+      );
+    }
+  }
+
+  Widget _buildAvatar() {
+    if (_currentUser?.avatarUrl != null && _currentUser!.avatarUrl!.isNotEmpty) {
+      print('🖼️ Chargement avatar: ${_currentUser!.avatarUrl}');
+      
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF1a1a1a),
+            width: 4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: _currentUser!.avatarUrl!,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => _buildLoadingAvatar(),
+            errorWidget: (context, url, error) {
+              print('❌ Erreur chargement avatar: $error');
+              _regenerateSimpleAvatar();
+              return _buildLoadingAvatar();
+            },
+          ),
+        ),
+      );
+    }
+    return _buildFallbackAvatar();
+  }
+
+  void _regenerateSimpleAvatar() {
+    if (_currentUser != null) {
+      final simpleAvatar = AvatarService.generateFallbackAvatar(_currentUser!.email);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateUserAvatar(simpleAvatar);
+      });
+    }
+  }
+
+  Future<void> _updateUserAvatar(String avatarUrl) async {
+    if (_currentUser != null) {
+      final updatedUser = _currentUser!.copyWith(avatarUrl: avatarUrl);
+      await _userService.updateUser(updatedUser);
+      setState(() {
+        _currentUser = updatedUser;
+      });
+      print('🔄 Avatar mis à jour');
+    }
+  }
+
+  Widget _buildLoadingAvatar() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF2d2d2d),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFa3e635),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackAvatar() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF2d2d2d),
+        border: Border.all(
+          color: const Color(0xFF1a1a1a),
+          width: 4,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          size: 50,
+          color: const Color(0xFFa3e635),
+        ),
+      ),
+    );
   }
 
   @override
@@ -75,13 +206,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header with Cover Photo
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Cover Image
                   Container(
-                    height: 200,
+                    height: 180,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Color(0xFFa3e635), Color(0xFF22c55e)],
@@ -89,7 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   
-                  // Back Button
                   Positioned(
                     top: 16,
                     left: 16,
@@ -99,7 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   
-                  // Edit/Save Button
+                  Positioned(
+                    top: 16,
+                    right: 80,
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.black),
+                      onPressed: _regenerateAvatar,
+                    ),
+                  ),
+                  
                   Positioned(
                     top: 16,
                     right: 16,
@@ -118,46 +254,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   
-                  // Profile Avatar
                   Positioned(
-                    bottom: -50,
+                    bottom: -60,
                     left: 0,
                     right: 0,
                     child: Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFF1a1a1a),
-                            width: 5,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: const Color(0xFF2d2d2d),
-                          child: Text(
-                            _currentUser!.name[0].toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFa3e635),
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: _buildAvatar(),
                     ),
                   ),
                 ],
               ),
               
-              const SizedBox(height: 60),
+              const SizedBox(height: 70),
               
-              // User Info Section
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Name
                     _isEditing
                         ? TextField(
                             controller: _nameController,
@@ -191,30 +304,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 24),
                     
-                    // Stats Cards
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            label: 'Entraînements',
-                            value: '28',
-                            icon: Icons.fitness_center,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildInfoCard(
-                            label: 'Badges',
-                            value: '${_currentUser!.badges.length}',
-                            icon: Icons.emoji_events,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildInfoRow('Genre', _currentUser!.gender),
+                    _buildInfoRow('Objectif', _getGoalText()),
+                    _buildInfoRow('Niveau', _getFitnessLevelText()),
+                    
                     const SizedBox(height: 32),
                     
-                    // Physical Information
-                    _buildSectionTitle('Informations physiques'),
+                    _buildSectionTitle('Caractéristiques physiques'),
                     const SizedBox(height: 16),
                     
                     _buildEditableField(
@@ -239,16 +335,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.height,
                       suffix: 'cm',
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     
-                    // BMI Card
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            _currentUser!.bmiColor.withOpacity(0.2),
-                            _currentUser!.bmiColor.withOpacity(0.05),
+                            _currentUser!.bmiColor.withOpacity(0.3),
+                            _currentUser!.bmiColor.withOpacity(0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -260,9 +355,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'IMC',
-                                style: TextStyle(color: Colors.grey, fontSize: 14),
+                                'INDICE DE MASSE CORPORELLE',
+                                style: TextStyle(color: Colors.grey, fontSize: 12),
                               ),
+                              const SizedBox(height: 4),
                               Text(
                                 _currentUser!.bmi.toStringAsFixed(1),
                                 style: TextStyle(
@@ -271,114 +367,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _currentUser!.bmiColor.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _currentUser!.bmiCategory,
-                              style: TextStyle(
-                                color: _currentUser!.bmiColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // Goal Section
-                    _buildSectionTitle('Objectif fitness'),
-                    const SizedBox(height: 16),
-                    
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2d2d2d),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFa3e635).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _getGoalEmoji(),
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
                               Text(
-                                _getGoalText(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Text(
-                                'Niveau ${_getFitnessLevelText()}',
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
+                                _currentUser!.bmiCategory,
+                                style: TextStyle(
+                                  color: _currentUser!.bmiColor,
+                                  fontSize: 14,
                                 ),
                               ),
                             ],
                           ),
+                          Icon(
+                            Icons.fitness_center,
+                            color: _currentUser!.bmiColor,
+                            size: 40,
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    
-                    // Badges Section
-                    if (_currentUser!.badges.isNotEmpty) ...[
-                      _buildSectionTitle('Badges obtenus'),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: _currentUser!.badges.map((badge) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2d2d2d),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('🏆', style: TextStyle(fontSize: 16)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  badge,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -389,32 +394,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoCard({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
+  Widget _buildInfoRow(String label, String value) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF2d2d2d),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: const Color(0xFFa3e635), size: 28),
-          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
+          ),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),
@@ -490,46 +491,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  String _getGoalEmoji() {
-    switch (_currentUser!.goal) {
-      case 'weight_loss':
-        return '🔥';
-      case 'muscle_gain':
-        return '💪';
-      case 'maintenance':
-        return '⚖️';
-      case 'endurance':
-        return '🏃';
-      default:
-        return '🎯';
-    }
-  }
-
   String _getGoalText() {
     switch (_currentUser!.goal) {
-      case 'weight_loss':
-        return 'Perte de poids';
-      case 'muscle_gain':
-        return 'Prise de masse';
-      case 'maintenance':
-        return 'Maintien';
-      case 'endurance':
-        return 'Endurance';
-      default:
-        return 'Objectif';
+      case 'weight_loss': return 'Perte de poids';
+      case 'muscle_gain': return 'Prise de muscle';
+      case 'endurance': return 'Endurance';
+      default: return 'Bien-être';
     }
   }
 
   String _getFitnessLevelText() {
     switch (_currentUser!.fitnessLevel) {
-      case 'beginner':
-        return 'Débutant';
-      case 'intermediate':
-        return 'Intermédiaire';
-      case 'advanced':
-        return 'Avancé';
-      default:
-        return '';
+      case 'beginner': return 'Débutant';
+      case 'intermediate': return 'Intermédiaire';
+      case 'advanced': return 'Avancé';
+      default: return 'Standard';
     }
   }
 }
