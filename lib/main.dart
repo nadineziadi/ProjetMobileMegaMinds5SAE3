@@ -1,4 +1,4 @@
-// MAIN.DART - Version avec Login comme page principale
+// MAIN.DART - Version finale intégrée
 // ============================================
 
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 
 // Import des services
 import 'pages/user/services/user_service.dart';
@@ -33,15 +34,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print('🚀 Starting GYMINI App...');
   
-  // 🔥 CORRECTION : Vérifier si on est sur une plateforme desktop AVANT d'utiliser Platform
-  try {
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-      print('🖥️ SQLite FFI initialized for Desktop');
-    }
-  } catch (e) {
-    print('⚠️ Platform check failed: $e');
+  // ✅ INITIALISATION SQLITE POUR DESKTOP (Version améliorée)
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+    print('🖥️ SQLite FFI initialized for Desktop');
   }
   
   // Initialiser le UserService
@@ -86,7 +86,7 @@ class GyminiApp extends StatelessWidget {
         ),
       ),
       
-      // ✅ CHANGEMENT ICI : Login comme page principale
+      // ✅ LOGIN COMME PAGE PRINCIPALE
       home: const LoginScreen(),
       
       routes: {
@@ -109,14 +109,14 @@ class GyminiApp extends StatelessWidget {
       
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
-          builder: (context) => const LoginScreen(), // ✅ Rediriger vers login si route inconnue
+          builder: (context) => const LoginScreen(),
         );
       },
     );
   }
 }
 
-// HomeTabs reste identique...
+// ✅ HOMETABS AMÉLIORÉ (combinaison des deux versions)
 class HomeTabs extends StatefulWidget {
   const HomeTabs({super.key});
 
