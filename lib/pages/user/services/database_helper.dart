@@ -101,38 +101,54 @@ class DatabaseHelper {
     await _createDefaultAdmin(db);
   }
 
-  Future<void> _createDefaultAdmin(Database db) async {
-    try {
-      final adminExists = await db.query(
-        'users',
-        where: 'email = ?',
-        whereArgs: ['admin@gymini.com'],
-      );
+Future<void> _createDefaultAdmin(Database db) async {
+  try {
+    final adminExists = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: ['admin@gymini.com'],
+    );
 
-      if (adminExists.isEmpty) {
-        await db.insert('users', {
-          'id': 'admin_001',
-          'name': 'Admin GYMINI',
-          'email': 'admin@gymini.com',
-          'password': 'admin123',
-          'role': 'admin',
-          'age': 30,
-          'weight': 75.0,
-          'height': 175.0,
-          'gender': 'male',
-          'fitnessLevel': 'advanced',
-          'goal': 'maintenance',
-          'avatarUrl': null,
-          'createdAt': DateTime.now().toIso8601String(),
-          'lastUpdated': DateTime.now().toIso8601String(),
-          'badges': jsonEncode([]),
-        });
-        print('🔑 Admin créé: admin@gymini.com / admin123');
-      }
-    } catch (e) {
-      print('⚠️ Error creating admin: $e');
+    if (adminExists.isEmpty) {
+      // 🎨 GÉNÉRER L'AVATAR POUR L'ADMIN
+      final adminAvatar = 'https://api.dicebear.com/9.x/micah/png?seed=admin&size=200&radius=50&backgroundColor=ffd700';
+      
+      await db.insert('users', {
+        'id': 'admin_001',
+        'name': 'Admin GYMINI',
+        'email': 'admin@gymini.com',
+        'password': 'admin123',
+        'role': 'admin',
+        'age': 30,
+        'weight': 75.0,
+        'height': 175.0,
+        'gender': 'male',
+        'fitnessLevel': 'advanced',
+        'goal': 'maintenance',
+        'avatarUrl': adminAvatar, // ← AJOUTÉ
+        'createdAt': DateTime.now().toIso8601String(),
+        'lastUpdated': DateTime.now().toIso8601String(),
+        'badges': jsonEncode([]),
+      });
+      print('🔑 Admin créé avec avatar: admin@gymini.com / admin123');
     }
+  } catch (e) {
+    print('⚠️ Error creating admin: $e');
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // === USER OPERATIONS ===
 
@@ -206,79 +222,131 @@ class DatabaseHelper {
   }
 
   Future<UserProfile> _mapToUserProfile(Map<String, dynamic> map) async {
-    final db = await database;
-    
-    final weightHistoryResults = await db.query(
-      'weight_history',
-      where: 'userId = ?',
-      whereArgs: [map['id']],
-      orderBy: 'date ASC',
-    );
+  final db = await database;
+  
+  print('📖 Chargement utilisateur: ${map['name']}');
+  
+  // Charger l'historique de poids depuis weight_history
+  final weightHistoryResults = await db.query(
+    'weight_history',
+    where: 'userId = ?',
+    whereArgs: [map['id']],
+    orderBy: 'date ASC',
+  );
 
-    final weightHistory = weightHistoryResults.map((w) => WeightEntry(
-      date: DateTime.parse(w['date'] as String),
-      weight: (w['weight'] as num).toDouble(),
-    )).toList();
-
-    return UserProfile(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      email: map['email'] as String,
-      password: map['password'] as String,
-      role: UserRole.values.firstWhere(
-        (e) => e.name == (map['role'] as String),
-        orElse: () => UserRole.user,
-      ),
-      age: map['age'] as int,
-      weight: (map['weight'] as num).toDouble(),
-      height: (map['height'] as num).toDouble(),
-      gender: map['gender'] as String,
-      fitnessLevel: map['fitnessLevel'] as String,
-      goal: map['goal'] as String,
-      avatarUrl: map['avatarUrl'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      lastUpdated: DateTime.parse(map['lastUpdated'] as String),
-      weightHistory: weightHistory,
-      badges: List<String>.from(jsonDecode(map['badges'] as String)),
-    );
+  final weightHistory = weightHistoryResults.map((w) => WeightEntry(
+    date: DateTime.parse(w['date'] as String),
+    weight: (w['weight'] as num).toDouble(),
+  )).toList();
+  
+  print('   Historique chargé: ${weightHistory.length} entrées');
+  if (weightHistory.isNotEmpty) {
+    print('   Premier: ${weightHistory.first.weight}kg');
+    print('   Dernier: ${weightHistory.last.weight}kg');
   }
+
+  return UserProfile(
+    id: map['id'] as String,
+    name: map['name'] as String,
+    email: map['email'] as String,
+    password: map['password'] as String,
+    role: UserRole.values.firstWhere(
+      (e) => e.name == (map['role'] as String),
+      orElse: () => UserRole.user,
+    ),
+    age: map['age'] as int,
+    weight: (map['weight'] as num).toDouble(),
+    height: (map['height'] as num).toDouble(),
+    gender: map['gender'] as String,
+    fitnessLevel: map['fitnessLevel'] as String,
+    goal: map['goal'] as String,
+    avatarUrl: map['avatarUrl'] as String?,
+    createdAt: DateTime.parse(map['createdAt'] as String),
+    lastUpdated: DateTime.parse(map['lastUpdated'] as String),
+    weightHistory: weightHistory,
+    badges: List<String>.from(jsonDecode(map['badges'] as String)),
+  );
+}
 
   Future<void> updateUser(UserProfile user) async {
-    final db = await database;
-    await db.update(
-      'users',
-      {
-        'name': user.name,
-        'age': user.age,
-        'weight': user.weight,
-        'height': user.height,
-        'gender': user.gender,
-        'fitnessLevel': user.fitnessLevel,
-        'goal': user.goal,
-        'avatarUrl': user.avatarUrl,
-        'role': user.role.name,
-        'lastUpdated': DateTime.now().toIso8601String(),
-        'badges': jsonEncode(user.badges),
-      },
-      where: 'id = ?',
-      whereArgs: [user.id],
-    );
-  }
-
-  Future<void> addWeightEntry(String userId, WeightEntry entry) async {
-    final db = await database;
+  final db = await database;
+  
+  print('💾 === MISE À JOUR UTILISATEUR ===');
+  print('User: ${user.name}');
+  print('Poids actuel: ${user.weight}kg');
+  print('Historique: ${user.weightHistory.length} entrées');
+  
+  // Mettre à jour les infos de base
+  await db.update(
+    'users',
+    {
+      'name': user.name,
+      'age': user.age,
+      'weight': user.weight,
+      'height': user.height,
+      'gender': user.gender,
+      'fitnessLevel': user.fitnessLevel,
+      'goal': user.goal,
+      'avatarUrl': user.avatarUrl,
+      'role': user.role.name,
+      'lastUpdated': DateTime.now().toIso8601String(),
+      'badges': jsonEncode(user.badges),
+    },
+    where: 'id = ?',
+    whereArgs: [user.id],
+  );
+  
+  // Synchroniser weight_history avec l'historique de l'utilisateur
+  // 1. Supprimer toutes les entrées existantes
+  await db.delete(
+    'weight_history',
+    where: 'userId = ?',
+    whereArgs: [user.id],
+  );
+  
+  // 2. Réinsérer tout l'historique
+  for (var entry in user.weightHistory) {
     await db.insert('weight_history', {
-      'userId': userId,
+      'userId': user.id,
       'date': entry.date.toIso8601String(),
       'weight': entry.weight,
     });
-    await db.update(
-      'users',
-      {'weight': entry.weight},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
   }
+  
+  print('✅ Utilisateur et historique mis à jour');
+  print('===================================\n');
+}
+
+
+ 
+Future<void> addWeightEntry(String userId, WeightEntry entry) async {
+  final db = await database;
+  
+  print('💾 Ajout entrée poids:');
+  print('   User: $userId');
+  print('   Poids: ${entry.weight}kg');
+  print('   Date: ${entry.date}');
+  
+  // Ajouter dans weight_history
+  await db.insert('weight_history', {
+    'userId': userId,
+    'date': entry.date.toIso8601String(),
+    'weight': entry.weight,
+  });
+  
+  // Mettre à jour le poids actuel dans users
+  await db.update(
+    'users',
+    {
+      'weight': entry.weight,
+      'lastUpdated': DateTime.now().toIso8601String(),
+    },
+    where: 'id = ?',
+    whereArgs: [userId],
+  );
+  
+  print('✅ Entrée ajoutée avec succès');
+}
 
   Future<void> deleteUser(String userId) async {
     final db = await database;

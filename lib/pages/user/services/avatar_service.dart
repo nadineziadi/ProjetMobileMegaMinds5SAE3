@@ -3,117 +3,86 @@ import '../models/user_model.dart';
 class AvatarService {
   static const String _baseUrl = 'https://api.dicebear.com/9.x';
   
-  /// Génère un avatar qui correspond VRAIMENT aux caractéristiques
+  /// Génère un avatar qui correspond aux caractéristiques de l'utilisateur
+  /// ⚠️ IMPORTANT: Lorelei et Micah ne supportent PAS les paramètres de customisation
+  /// Seuls seed, size, radius, backgroundColor et flip sont supportés
   static String generateUserAvatar(UserProfile user) {
-    final seed = user.email.isNotEmpty ? user.email : user.name;
+    // Créer un seed unique basé sur les caractéristiques
+    final seed = _createSeedFromCharacteristics(user);
     
-    // Style selon le genre - CORRIGÉ
+    // Style selon le genre
     final style = user.gender.toLowerCase() == 'female' ? 'lorelei' : 'micah';
     
-    // Paramètres de base
-    final params = {
+    // UNIQUEMENT les paramètres supportés par Lorelei et Micah
+    final params = <String, String>{
       'seed': seed,
-      'backgroundColor': _getBackgroundColorByBMI(user.bmi),
-      'radius': '50',
       'size': '200',
+      'radius': '50',
+      'backgroundColor': _getBackgroundColorByBMI(user.bmi),
     };
 
-    // 🔹 PARAMÈTRES SPÉCIFIQUES AU STYLE - CORRIGÉ
-    if (style == 'lorelei') {
-      // STYLE FÉMININ
-      params.addAll({
-        'hair': _getValidFemaleHair(user.goal),
-        'hairColor': _getValidHairColor(user.age),
-        'accessories': _getValidAccessories(user.fitnessLevel),
-        'clothing': _getValidClothing(user.fitnessLevel),
-      });
-    } else {
-      // STYLE MASCULIN
-      params.addAll({
-        'hair': _getValidMaleHair(user.goal),
-        'hairColor': _getValidHairColor(user.age),
-        'facialHair': _getValidFacialHair(user.age, user.bmi),
-        'accessories': _getValidAccessories(user.fitnessLevel),
-        'clothing': _getValidClothing(user.fitnessLevel),
-      });
-    }
-
     final queryParams = params.entries
-        .where((entry) => entry.value.isNotEmpty && entry.value != 'null')
         .map((entry) => '${entry.key}=${Uri.encodeComponent(entry.value)}')
         .join('&');
 
     final url = '$_baseUrl/$style/png?$queryParams';
-    print('🎨 Avatar CORRECT généré pour ${user.name}');
-    print('   → Genre: ${user.gender}, Âge: ${user.age}, Objectif: ${user.goal}');
+    print('🎨 Avatar généré pour ${user.name} ($style)');
+    print('   → Seed: $seed');
     print('   → URL: $url');
     return url;
   }
-
-  // 🔹 COIFFURE FÉMININE CORRECTE
-  static String _getValidFemaleHair(String goal) {
-    switch (goal) {
-      case 'weight_loss': return 'long';
-      case 'muscle_gain': return 'bob';
-      case 'endurance': return 'ponytail';
-      default: return 'curly';
-    }
-  }
-
-  // 🔹 COIFFURE MASCULINE CORRECTE
-  static String _getValidMaleHair(String goal) {
-    switch (goal) {
-      case 'weight_loss': return 'short';
-      case 'muscle_gain': return 'pomp';
-      case 'endurance': return 'fohawk';
-      default: return 'classic';
-    }
-  }
-
-  // 🔹 BARBE CORRECTE (uniquement hommes +25 ans)
-  static String _getValidFacialHair(int age, double bmi) {
-    if (age < 25) return '';
+  
+  /// Crée un seed unique basé sur les caractéristiques de l'utilisateur
+  /// Cela garantit que les avatars varient selon les profils
+  static String _createSeedFromCharacteristics(UserProfile user) {
+    // Combiner plusieurs caractéristiques pour créer un seed unique
+    final characteristics = [
+      user.email,
+      user.gender,
+      user.age.toString(),
+      user.goal,
+      user.fitnessLevel,
+      user.bmi.toStringAsFixed(0),
+    ].join('-');
     
-    if (bmi < 18.5) return 'scruff';
-    if (bmi < 25) return 'beardMedium';
-    if (bmi < 30) return 'beardLight';
-    return 'beardMagestic';
+    return Uri.encodeComponent(characteristics);
   }
 
-  // 🔹 COULEUR DE CHEVEUX RÉALISTE
-  static String _getValidHairColor(int age) {
-    if (age < 20) return '0e0e0e';
-    if (age < 35) return '2c1b1b';
-    if (age < 50) return 'a78b6f';
-    return 'd4d4d4';
-  }
-
-  // 🔹 ACCESSOIRES CORRESPONDANTS
-  static String _getValidAccessories(String fitnessLevel) {
-    switch (fitnessLevel.toLowerCase()) {
-      case 'beginner': return '';
-      case 'intermediate': return 'round';
-      case 'advanced': return 'sunglasses';
-      default: return '';
-    }
-  }
-
-  // 🔹 VÊTEMENTS CORRESPONDANTS
-  static String _getValidClothing(String fitnessLevel) {
-    switch (fitnessLevel.toLowerCase()) {
-      case 'beginner': return 'shirt';
-      case 'intermediate': return 'hoodie';
-      case 'advanced': return 'tankTop';
-      default: return 'shirt';
-    }
-  }
-
-  // 🔹 COULEUR DE FOND SELON L'IMC
+    
+  /// 🔹 COULEUR DE FOND SELON L'IMC
   static String _getBackgroundColorByBMI(double bmi) {
-    if (bmi < 18.5) return 'ffeb3b';
-    if (bmi < 25) return '4caf50';
-    if (bmi < 30) return 'ff9800';
-    return 'f44336';
+    if (bmi < 18.5) return 'ffeb3b'; // Jaune (sous-poids)
+    if (bmi < 25) return '4caf50';   // Vert (normal)
+    if (bmi < 30) return 'ff9800';   // Orange (surpoids)
+    return 'f44336';                  // Rouge (obésité)
+  }
+
+  /// 🔹 VERSION ALTERNATIVE AVEC AVATAAARS (plus de customisation)
+  /// Si vous voulez plus de contrôle, utilisez le style 'avataaars'
+  static String generateCustomizableAvatar(UserProfile user) {
+    final seed = user.email;
+    
+    // Avataaars supporte beaucoup plus d'options
+    final params = <String, String>{
+      'seed': seed,
+      'size': '200',
+      'radius': '50',
+      'backgroundColor': _getBackgroundColorByBMI(user.bmi),
+      'skinColor': _getSkinToneByAge(user.age),
+    };
+
+    final queryParams = params.entries
+        .map((entry) => '${entry.key}=${Uri.encodeComponent(entry.value)}')
+        .join('&');
+
+    return '$_baseUrl/avataaars/png?$queryParams';
+  }
+  
+  static String _getSkinToneByAge(int age) {
+    if (age < 20) return 'ffdbb4';
+    if (age < 40) return 'edb98a';
+    if (age < 60) return 'd08b5b';
+    return 'ae5d29';
   }
 
   /// 🔹 VERSION SIMPLE POUR TESTS
@@ -121,13 +90,13 @@ class AvatarService {
     final seed = Uri.encodeComponent(user.email);
     final style = user.gender.toLowerCase() == 'female' ? 'lorelei' : 'micah';
     
-    return 'https://api.dicebear.com/9.x/$style/png?seed=$seed&size=200&radius=50';
+    return 'https://api.dicebear.com/9.x/$style/png?seed=$seed&size=200&radius=50&backgroundColor=${_getBackgroundColorByBMI(user.bmi)}';
   }
 
   /// 🔹 VERSION DE SECOURS
   static String generateFallbackAvatar(String email) {
     final seed = Uri.encodeComponent(email);
-    return 'https://api.dicebear.com/9.x/avataaars/png?seed=$seed&size=200&radius=50';
+    return 'https://api.dicebear.com/9.x/bottts/png?seed=$seed&size=200&radius=50';
   }
 
   /// 🔹 TEST DE GÉNÉRATION D'AVATAR

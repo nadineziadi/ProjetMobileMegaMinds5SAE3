@@ -21,6 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
 
+
+  
+
   @override
   void initState() {
     super.initState();
@@ -78,23 +81,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _regenerateAvatar() {
-    if (_currentUser != null) {
+Future<void> _regenerateAvatar() async {
+  if (_currentUser != null) {
+    try {
       print('🔄 Régénération de l\'avatar...');
       AvatarService.debugAvatarGeneration(_currentUser!);
       
+      // Générer le nouvel avatar
       final newAvatarUrl = AvatarService.generateUserAvatar(_currentUser!);
-      _updateUserAvatar(newAvatarUrl);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Avatar régénéré avec les caractéristiques correctes'),
-          backgroundColor: Color(0xFFa3e635),
-        ),
+      // Mettre à jour l'utilisateur avec le nouvel avatar
+      final updatedUser = UserProfile(
+        id: _currentUser!.id,
+        name: _currentUser!.name,
+        email: _currentUser!.email,
+        password: _currentUser!.password,
+        role: _currentUser!.role,
+        age: _currentUser!.age,
+        weight: _currentUser!.weight,
+        height: _currentUser!.height,
+        gender: _currentUser!.gender,
+        fitnessLevel: _currentUser!.fitnessLevel,
+        goal: _currentUser!.goal,
+        avatarUrl: newAvatarUrl, // ← NOUVEL AVATAR
+        createdAt: _currentUser!.createdAt,
+        lastUpdated: DateTime.now(),
+        weightHistory: _currentUser!.weightHistory,
+        badges: _currentUser!.badges,
       );
+      
+      // Sauvegarder dans la base de données
+      await _userService.updateUser(updatedUser);
+      
+      // Recharger l'utilisateur pour rafraîchir l'affichage
+      await _loadUser();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Avatar régénéré avec succès'),
+            backgroundColor: Color(0xFFa3e635),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Erreur régénération avatar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
+}
 
+// Ajoutez aussi cette méthode pour forcer le rechargement du cache
+void _clearCacheAndRegenerate() async {
+  if (_currentUser != null) {
+    try {
+      // Vider le cache de l'image
+      await CachedNetworkImage.evictFromCache(_currentUser!.avatarUrl ?? '');
+      
+      // Régénérer l'avatar
+      await _regenerateAvatar();
+    } catch (e) {
+      print('❌ Erreur nettoyage cache: $e');
+    }
+  }
+}
   Widget _buildAvatar() {
     if (_currentUser?.avatarUrl != null && _currentUser!.avatarUrl!.isNotEmpty) {
       print('🖼️ Chargement avatar: ${_currentUser!.avatarUrl}');

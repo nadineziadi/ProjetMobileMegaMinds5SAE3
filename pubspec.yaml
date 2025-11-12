@@ -23,6 +23,7 @@ dependencies:
   sqflite: ^2.3.2
   sqflite_common_ffi: ^2.3.1+2
   path: ^1.8.3
+
   path_provider: ^2.1.2
 
   # Hive (pour le cache rapide)
@@ -34,6 +35,7 @@ dependencies:
 
   # ===== NETWORK & APIS =====
   http: ^1.2.0
+  geolocator: ^11.0.1
   url_launcher: ^6.1.11
 
   # ===== UI COMPONENTS & CHARTS =====

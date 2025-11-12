@@ -21,6 +21,7 @@ import 'pages/user/screens/dashboard_screen.dart';
 import 'pages/user/screens/admin_dashboard_screen.dart';
 import 'pages/user/screens/profile_screen.dart';
 import 'pages/user/screens/settings_screen.dart';
+import 'pages/user/screens/weather_screen.dart';
 
 // Import module pages
 import 'pages/user/dashboard_page.dart';
@@ -105,6 +106,7 @@ class GyminiApp extends StatelessWidget {
         '/adminDashboard': (context) => const AdminDashboardScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/settings': (context) => SettingsScreen(),
+        '/weather': (context) => const WeatherScreen(),
       },
       
       onUnknownRoute: (settings) {
