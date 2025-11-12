@@ -7,6 +7,7 @@ import 'add_meal_page.dart';
 import 'barcode_scanner_page.dart';
 import 'healthy_meals_page.dart';
 import 'water_tracker_page.dart';
+import 'nutrition_stats_page.dart';
 
 class NutritionPage extends StatefulWidget {
   const NutritionPage({super.key});
@@ -127,11 +128,41 @@ class NutritionPageState extends State<NutritionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFC7F000)))
-            : CustomScrollView(slivers: [
+    return Scaffold(
+      backgroundColor: const Color(0xFF1E2124),
+      appBar: AppBar(
+        title: const Text("Nutrition"),
+        backgroundColor: const Color(0xFF2A2E32),
+        elevation: 0,
+        actions: [
+          // Add Meal Button
+          IconButton(
+            icon: const Icon(Icons.add, color: Color(0xFFC7F000)),
+            onPressed: () => showAddOptions(),
+          ),
+
+          // Statistics Button
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Color(0xFFC7F000)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const NutritionStatsPage()));
+            },
+          ),
+
+          // Favorites / Recettes Préférées Button - CHANGÉ: coeur -> fastfood
+          IconButton(
+            icon: const Icon(Icons.fastfood, color: Color(0xFFC7F000)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthyMealsPage()));
+            },
+          ),
+        ],
+      ),
+
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC7F000)))
+          : CustomScrollView(
+              slivers: [
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
                 // Calories totales
@@ -155,43 +186,47 @@ class NutritionPageState extends State<NutritionPage> {
 
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // 4 cartes avec emojis
+                // Mini cards
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(children: [
-                      _miniCard(0, 'Petit-déj', caloriesByCategory[0]!),
-                      const SizedBox(width: 12),
-                      _miniCard(1, 'Déj', caloriesByCategory[1]!),
-                      const SizedBox(width: 12),
-                      _miniCard(2, 'Dîner', caloriesByCategory[2]!),
-                      const SizedBox(width: 12),
-                      _miniCard(3, 'Snack', caloriesByCategory[3]!),
-                    ]),
+                    child: Row(
+                      children: [
+                        _miniCard(0, 'Petit-déj', caloriesByCategory[0]!),
+                        const SizedBox(width: 12),
+                        _miniCard(1, 'Déj', caloriesByCategory[1]!),
+                        const SizedBox(width: 12),
+                        _miniCard(2, 'Dîner', caloriesByCategory[2]!),
+                        const SizedBox(width: 12),
+                        _miniCard(3, 'Snack', caloriesByCategory[3]!),
+                      ],
+                    ),
                   ),
                 ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                // Conseil
+                // Advice
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(color: const Color(0xFF2A2E32), borderRadius: BorderRadius.circular(16)),
-                      child: Row(children: [
-                        const Icon(Icons.lightbulb_outline, color: Color(0xFFC7F000), size: 28),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(advice, style: const TextStyle(color: Colors.white, fontSize: 15))),
-                      ]),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lightbulb_outline, color: Color(0xFFC7F000), size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(advice, style: const TextStyle(color: Colors.white, fontSize: 15))),
+                        ],
+                      ),
                     ),
                   ),
                 ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                // Repas par catégorie
+                // Meals by category
                 ...List.generate(4, (cat) {
                   final catMeals = getMealsByCategory(cat);
                   if (catMeals.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
@@ -200,12 +235,16 @@ class NutritionPageState extends State<NutritionPage> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-                        child: Row(children: [
-                          Text(['🌅', '☀️', '🌙', '🍎'][cat], style: const TextStyle(fontSize: 26)),
-                          const SizedBox(width: 12),
-                          Text(['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Collation'][cat],
-                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        ]),
+                        child: Row(
+                          children: [
+                            Text(['🌅', '☀️', '🌙', '🍎'][cat], style: const TextStyle(fontSize: 26)),
+                            const SizedBox(width: 12),
+                            Text(
+                              ['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Collation'][cat],
+                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
                       ),
                       ...catMeals.map((m) => MealCard(meal: m, onDelete: () => deleteMeal(m))),
                       const SizedBox(height: 16),
@@ -213,30 +252,42 @@ class NutritionPageState extends State<NutritionPage> {
                   );
                 }),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              ]),
+                // SUPPRIMÉ: L'espace supplémentaire en bas a été enlevé
+              ],
+            ),
 
-        // BOUTON BOUTEILLE D'EAU EN BAS À DROITE
-        Positioned(
-          bottom: 100,
-          right: 20,
-          child: FloatingActionButton(
-            backgroundColor: const Color(0xFF0288D1),
-            elevation: 8,
-            child: const Icon(Icons.local_drink, color: Colors.white, size: 32),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const WaterTrackerPage()));
-            },
-          ),
+      // Floating button déplacé vers le haut
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 60.0), // Déplacé vers le haut
+        child: FloatingActionButton(
+          heroTag: "water",
+          backgroundColor: const Color(0xFF0288D1),
+          child: const Icon(Icons.local_drink, color: Colors.white, size: 32),
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const WaterTrackerPage()));
+          },
         ),
-      ],
+      ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF2A2E32),
+        selectedItemColor: const Color(0xFFC7F000),
+        unselectedItemColor: Colors.white54,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.restaurant), label: "Nutrition"),
+          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: "Workouts"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+        currentIndex: 0,
+        onTap: (index) {
+          // handle navigation
+        },
+      ),
     );
   }
 
   Widget _miniCard(int cat, String title, int cal) {
-    // Définir les emojis pour chaque catégorie
     final emojis = ['🌅', '☀️', '🌙', '🍎'];
-    
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),

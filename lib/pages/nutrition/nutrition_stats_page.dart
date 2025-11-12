@@ -295,89 +295,96 @@ class _NutritionStatsPageState extends State<NutritionStatsPage> {
     );
   }
 
-  Widget _buildBarChart() {
-    if (_data.isEmpty) {
-      return const Center(
-        child: Text(
-          'Aucune donnée disponible',
-          style: TextStyle(color: Colors.white70),
-        ),
-      );
-    }
-
-    final maxY = _data.values.isEmpty 
-        ? 2000.0 
-        : (_data.values.reduce((a, b) => a > b ? a : b) * 1.2).toDouble();
-
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        barGroups: _data.entries.toList().asMap().entries.map((entry) {
-          return BarChartGroupData(
-            x: entry.key,
-            barRods: [
-              BarChartRodData(
-                toY: entry.value.value.toDouble(),
-                color: const Color(0xFFC7F000),
-                width: 20,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(6),
-                  topRight: Radius.circular(6),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 50,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toInt().toString(),
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                );
-              },
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                if (index >= 0 && index < _data.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      _data.keys.toList()[index],
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                }
-                return const Text('');
-              },
-            ),
-          ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY / 5,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: Colors.white12,
-              strokeWidth: 1,
-            );
-          },
-        ),
-        borderData: FlBorderData(show: false),
+ Widget _buildBarChart() {
+  if (_data.isEmpty) {
+    return const Center(
+      child: Text(
+        'Aucune donnée disponible',
+        style: TextStyle(color: Colors.white70),
       ),
     );
   }
+
+  // Calculate maxY safely
+  final maxYValue = _data.values.isEmpty
+      ? 0.0
+      : _data.values.reduce((a, b) => a > b ? a : b).toDouble();
+
+  final maxY = maxYValue * 1.2; // add some headroom
+  final interval = maxY == 0 ? 1.0 : maxY / 5; // prevent horizontalInterval = 0
+
+  return BarChart(
+    BarChartData(
+      maxY: maxY == 0 ? 10 : maxY, // avoid maxY = 0
+      barGroups: _data.entries.toList().asMap().entries.map((entry) {
+        final index = entry.key;
+        final value = entry.value.value.toDouble();
+        return BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: value,
+              color: const Color(0xFFC7F000),
+              width: 20,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(6),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+      titlesData: FlTitlesData(
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 50,
+            getTitlesWidget: (value, meta) {
+              return Text(
+                value.toInt().toString(),
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              );
+            },
+          ),
+        ),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              final index = value.toInt();
+              if (index >= 0 && index < _data.length) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _data.keys.toList()[index],
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                );
+              }
+              return const Text('');
+            },
+          ),
+        ),
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      ),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: interval,
+        getDrawingHorizontalLine: (value) {
+          return FlLine(
+            color: Colors.white12,
+            strokeWidth: 1,
+          );
+        },
+      ),
+      borderData: FlBorderData(show: false),
+    ),
+  );
+}
+
 }
